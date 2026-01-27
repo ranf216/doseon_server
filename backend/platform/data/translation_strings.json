@@ -1,0 +1,10 @@
+{
+    "app_name"                                          :   {"name" : {"en" : "infra.js",      "other language" : "translated string"}      },
+
+    "email - forgot password"	                        :	{"name" : {"en" : "Reset password for Infra"}                                   },
+    "email template - forgot password"			        :	{"name" : {"en" : "forgot_password.html"}                                       },
+
+    "sms - otp verification"							:	{"name" : {"en" : "Your verification code for Infra is: {0}"}                   },
+    "email - otp verification"							:	{"name" : {"en" : "Your verification code to Infra"}                            },
+    "email template - otp verification"					:	{"name" : {"en" : "otp_verification_code.html"}                                 }
+}

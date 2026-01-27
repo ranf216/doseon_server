@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+    <head>
+		<title>{{system}} {{environment}} - Otp Viewer</title>
+		<link rel="shortcut icon" href="/favicon.ico?src=otp_viewer" />
+		<script type="text/javascript" src="/public/jquery-1.8.2.mini.js"></script>
+		<script type="text/javascript" src="/public/jquery.cookie.js"></script>
+
+		<style type="text/css">
+			html, body {height: 100%; width: 100%; margin: 0;  padding:0;}
+			#outer {height: 100%; width: 100%; margin: 0;  padding:0;}
+            #header {padding: 5px;}
+
+			#content {position: absolute; bottom: 0; width: 100%; overflow: scroll; font: 16px "courier new";}
+			#logout {background-color: #f7ae66; border: #df7002 2px solid; font-weight: bold; cursor: pointer; {{enable_system_login}} }
+
+            td {padding-left: 20px;}
+            .rc_error {color: red;}
+
+            .spacer1 {width: 1px; display: inline-block;}
+			.vspacer {font-size: 1px; height: 6px;}
+            .large_vspacer {font-size: 1px; height: 20px;}
+
+			.simple_data {cursor: default;}
+			.simple_data span {color: #0000ff;}
+		</style>
+
+        <script type="text/javascript">
+			$(document).ready(function()
+			{
+				const element = document.getElementById("inner_fixed");
+				const observer = new ResizeObserver(entries =>
+				{
+					for (let entry of entries)
+					{
+						console.log('Height changed to', entry.contentRect.height);
+						$("#content").css("top", entry.contentRect.height);
+						// Your callback here
+					}
+				}).observe(element);
+
+                query();
+			});
+
+            function clearAllMessage()
+            {
+                $("#content").html("");
+            }
+
+            function appendLine(line)
+            {
+                $("#content").append(line);
+                $('#content').scrollTop($('#content')[0].scrollHeight);
+            }
+
+            function query()
+            {
+                clearAllMessage();
+
+                makeApiCall({"#request": "System/get_otp_debug_logs", "token": jQuery.cookie("system_token")}, rc =>
+                {
+                    let content = `<table cellpadding="5" cellspacing="0" border="0">`;
+
+                    if (rc.rc == 0)
+                    {
+                        if (rc.logs.length == 0)
+                        {
+                            content += ("<tr><td>No results</td></tr>");
+                        }
+
+                        rc.logs.forEach(call =>
+                        {
+                            content += `<tr>
+                                            <td class="simple_data">${call.datetime}</td>
+                                            <td class="simple_data" onclick="copyToClipboard($(this).find('span').text())">${wrapInSpan(call.text)}</td>
+                                        </tr>`;
+                        });
+                    }
+                    else
+                    {
+                        content += `<tr><td class="rc_error">[${rc.rc}] ${rc.message}</td></tr>`;
+                    }
+
+                    content += `</table>`;
+
+                    appendLine(content);
+                    $('#content').scrollTop(0);
+                });
+            }
+
+			function doOnLogout()
+			{
+				if (!confirm("Are you sure you want to logout?"))
+				{
+					return;
+				}
+
+                makeApiCall({"#request": "User/system_logout", "token": jQuery.cookie("system_token")}, rc =>
+                {
+                    jQuery.removeCookie("system_token");
+                    window.location = "system_login/otp_viewer";
+                });
+			}
+
+            function makeApiCall(request, callback)
+            {
+                $.ajax({
+                        url: "{{api_url}}",
+                        type: "POST",
+                        data: JSON.stringify(request),
+                        dataType: 'json',
+                        headers: { 'Content-Type': 'application/json' },
+                        success: function (json)
+                        {
+                            if (json.rc == undefined)
+                            {
+                                alert(JSON.stringify(json));
+                                return;
+                            }
+
+                            callback(json);
+                        },
+                        error: function()
+                        {
+                            alert(arguments[0].responseText);
+                        }
+                });
+            }
+
+            function wrapInSpan(inputString)
+            {
+                const regex = /{{(.*?)}}/g;
+                return inputString.replace(regex, "<span>$1</span>");
+            }
+
+			function copyToClipboard(text)
+			{
+				if (navigator.clipboard)
+				{
+					navigator.clipboard.writeText(text)
+					.then(() =>
+					{
+						showToast("Copied to clipboard!");
+					})
+					.catch(err =>
+					{
+						showToast("Failed to copy text", true);
+					});
+				}
+				else
+				{
+					const textarea = document.createElement("textarea");
+					textarea.value = text;
+					document.body.appendChild(textarea);
+					textarea.select();
+					document.execCommand("copy");
+					document.body.removeChild(textarea);
+					showToast("Copied to clipboard!");
+				}
+			}
+
+			function showToast(message, isErr = false)
+			{
+				const toast = document.createElement("div");
+				toast.textContent = message;
+				toast.style.position = "fixed";
+				toast.style.bottom = "40px";
+				toast.style.left = "50%";
+				toast.style.transform = "translateX(-50%)";
+				toast.style.background = (isErr ? "#A00000" : "#333333");
+				toast.style.color = "#ffffff";
+				toast.style.padding = "10px 20px";
+				toast.style.borderRadius = "8px";
+				toast.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
+				toast.style.zIndex = "9999";
+				toast.style.opacity = "0";
+				toast.style.transition = "opacity 0.3s";
+
+				document.body.appendChild(toast);
+
+				// Fade in
+				requestAnimationFrame(() =>
+				{
+					toast.style.opacity = "1";
+				});
+
+				// Remove after 1 second
+				setTimeout(() =>
+				{
+					toast.style.opacity = "0";
+					toast.addEventListener("transitionend", () =>
+					{
+						toast.remove();
+					});
+				}, 1000);
+			}
+        </script>
+    </head>
+    <body>
+        <div id="outer">
+            <div id="inner_fixed">
+                <div id="header">
+                    <div><input type="button" id="logout" onclick="doOnLogout()" value="Logout" /></div>
+                    <div class="large_vspacer"></div>
+                    <div id="controls">
+                        <button id="refresh" onclick="query()">Refresh</button>
+                    </div>
+                    <hr />
+                </div>
+            </div>
+        
+            <div id="content">
+            </div>
+        </div>
+    </body>
+</html>

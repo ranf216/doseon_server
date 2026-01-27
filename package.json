@@ -1,0 +1,27 @@
+{
+  "dependencies": {
+    "@sendgrid/mail": "^7.6.2",
+    "aws-sdk": "^2.1096.0",
+    "content-type": "^1.0.4",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "deasync": "0.1.24",
+    "email-validator": "^2.0.4",
+    "express": "^4.17.3",
+    "express-http-context": "^1.2.4",
+    "express-useragent": "^1.0.15",
+    "firebase-admin": "^12.4.0",
+    "ics": "^3.5.0",
+    "ltrim": "^1.0.1",
+    "mysql2": "^2.3.3",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.7.3",
+    "raw-body": "^2.5.1",
+    "sharp": "^0.30.3",
+    "socket.io": "^4.7.3",
+    "twilio": "^3.76.0",
+    "ucfirst": "^1.0.0",
+    "ucwords": "^1.0.5",
+    "uuid": "^8.3.2"
+  }
+}

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>{{system}} {{environment}} - API Test</title>
+		<link rel="shortcut icon" href="/favicon.ico?src=apiclient" />
+
+		<script type="text/javascript" src="/public/jquery-1.8.2.mini.js"></script>
+		<script type="text/javascript" src="/public/jquery.cookie.js"></script>
+		<script type="text/javascript" src="/public/rest-base.js"></script>
+		<script type="text/javascript" src="/public/apiclient-control.js"></script>
+		<script type="text/javascript" src="/public/jsapi.js"></script>
+		
+		<style type="text/css">
+			pre, .divContainer {outline: 1px solid #ccc; padding: 5px; margin: 5px;}
+			pre {white-space: pre-wrap; word-wrap: break-word;}
+			.divHelp {outline: 1px solid #1856fe; color: #1856fe; font: 14px Arial;}
+			.helpTitle {font: 18px Arial; padding-bottom: 3px;}
+			.helpSubTitle {color: #0e3dbc; font: 16px Arial; padding-top: 5px; padding-bottom: 5px;}
+			.helpCode {color: #000000; font: 14px 'Courier New';}
+			.helpCodeBlock {color: #000000; font: 14px 'Courier New'; padding-bottom: 5px; padding-top: 5px;}
+			.helpExampleTitle {color: #0e3dbc; padding-top: 3px;}
+			.string { color: green; }
+			.number { color: darkorange; }
+			.boolean { color: blue; }
+			.null { color: magenta; }
+			.key { color: red; }
+			.documentation {color: #0000ff; font-size: 16px;}
+			.userCtx {display: none;}
+			.userCtxSelect {font-weight: bold; color: #008000;}
+			.inputParamOptional {color: #00a000;}
+			input {width: 360px;}
+			input[type="checkbox"] {width: 24px;}
+			select {width: 200px;}
+			.selectLarge {width: 360px;}
+			.sectionTitle {font: 20px Arial;}
+			.alertsContainer {background: #ff5135;}
+			#alertsArea {width: 98%; border: 1px solid #ccc; color: #000000; padding: 5px; outline: none; background: white;}
+			.alertItem {}
+			.alertSep {border-top: 1px solid #aaa; margin: 3px 0 3px 0;}
+			#scriptArea, #requestJsonArea {width: 98%; border: 1px solid #ccc; color: #000000; padding: 5px; height: 60px; outline: none;}
+			.blankSep {height: 10px;}
+			.noText {color: #808080; font: 14px 'Courier New';}
+			.hasText {color: #000000; font: 14px 'Courier New';}
+			.xButton {border: 1px solid #808080; font: bold 16px Arial; padding: 0 3px 0 3px; cursor: default; background: red; color: white}
+			.vButton {border: 1px solid #808080; font: bold 16px Arial; padding: 0 3px 0 3px; cursor: default; background: green; color: white}
+			.rightFloat {float: right;}
+			.divCall {clear: both; padding: 4px 0 4px 0;}
+			.divParam {clear: both; padding: 4px 0 4px 0;}
+			.superuser_api {color: #c00000;}
+			.test_api {color: #33aa77;}
+			.deprecated_api {color: #aaaaaa;}
+			.warning {width: 80%; padding: 3px 3px 3px 20px; border: solid 2px blue; margin-bottom: 2px; font-weight: bold;}
+			.warning_high {color: white; background: #c00000;}
+			.warning_medium {color: #000000; background: #ff8a01;}
+			.warning_low {color: #000000; background: #f9f22b;}
+			.invalid_json_error {color: #c00000;}
+		</style>
+
+    </head>
+    <body>
+		{{getWebClientMessages}}
+		{{getWebClientEnvironment}}
+		<table border="0" cellspacing="0" cellpadding="0" width="100%">
+			<colgroup><col width="70%"><col width="20px"><col /></colgroup>
+			<tr>
+				<td valign="top">
+	  
+					<pre><select id="selectApiGroup" style="font-size: 20px;"></select>   <select id="selectApi" class="selectLarge" style="font-size: 20px;"></select>   <select id="selectUserTypes" style="font-size: 20px;"></select></pre>
+					<pre id="documentation" class="documentation"></pre>
+					<pre id="userCtx" class="userCtx"><select id="userCtxSelect" class="userCtxSelect"></select> <button id="btnDeleteCtx">Delete</button> <button id="btnDeleteAllCtx">Delete All</button></pre>
+					<pre id="getParams"></pre>
+					<pre id="postParams"></pre>
+					<pre><button id="btnPost">Post</button></pre>
+					<pre id="request"></pre>
+					<pre id="postData"></pre>
+					<pre id="response"></pre>
+		
+				</td>
+				<td></td>
+				<td valign="top">
+
+					<div class="divContainer alertsContainer" id="alerts" style="display: none;">
+						<span class="sectionTitle">System alerts</span>
+						<div class="blankSep">&nbsp;</div>
+						<div id="alertsArea"></div>
+					</div>
+					<div class="divContainer" id="postJSON">
+						<span class="sectionTitle">Post JSON request</span>
+						<button class="rightFloat" id="postJsonBtn">Post</button>
+						<div class="blankSep">&nbsp;</div>
+						<textarea id="requestJsonArea" placeholder="Type JSON request..."></textarea>
+					</div>
+					<div class="divContainer" id="runAfter">
+						<span class="sectionTitle">Run after receive response</span>
+						<div class="blankSep">&nbsp;</div>
+						<textarea id="scriptArea" placeholder="Type script..."></textarea>
+					</div>
+					<div class="divContainer" id="runNow">
+						<span class="sectionTitle">Run script</span>
+						<div class="blankSep">&nbsp;</div>
+						<input type="text" id="scriptLine" style="width:90%" placeholder="Type script..." />
+						<button class="rightFloat" id="scriptRunBtn">Run</button>
+					</div>
+					<div class="divContainer">
+						<span class="sectionTitle">Parameters</span>
+						<button class="rightFloat" id="btnClearAll">Clear All</button>
+						<div class="blankSep">&nbsp;</div>
+						<div class="divContainer" id="paramsList">
+						</div>
+					</div>
+					<div class="divContainer">
+						<span class="sectionTitle">Saved calls</span>
+						<button class="rightFloat" id="btnSaveCall">Save Call</button>
+						<div class="blankSep">&nbsp;</div>
+						<div class="divContainer" id="callsList">
+						</div>
+					</div>
+					<br/>
+					<div class="divContainer divHelp">
+						<div class="helpTitle">About persistence</div>
+						<div class="helpSubTitle">Run after receive response & Parameters</div>
+						You can add any valid JavaScript code to "Run after receive response" area.<br/>
+						Use the global object <span class="helpCode">$$</span> to save information.<br/>
+						Use the global object <span class="helpCode">json</span> to read data from the response.<br/>
+						<div class="helpExampleTitle">For example:</div>
+						<div class="helpCodeBlock">$$.myuser = json.user_id</div>
+						After posting the request, the code will run and you'll see the global parameters added to the "Parameters" section.<br/><br/>
+						In the request inputs, you can use any parameter from the global object
+						<div class="helpExampleTitle">For example:</div>
+						<div class="helpCodeBlock">$$.myuser</div>
+						<div class="helpSubTitle">Saved calls</div>
+						You can save request with their params and scripts, giving them names for later use.
+					</div>
+
+				</td>
+			</tr>
+		</table>
+    </body>
+</html>

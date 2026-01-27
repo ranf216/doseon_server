@@ -1,0 +1,359 @@
+-- V 3.5.0
+
+DROP TABLE IF EXISTS `system_user`;
+CREATE TABLE  `system_user` (
+  `STU_USER_NAME` varchar(128) NOT NULL,
+  `STU_PASSWORD` varchar(128) NOT NULL,
+  `STU_CREATE` datetime NOT NULL,
+  `STU_TOKEN` varchar(128) NOT NULL DEFAULT '',
+  `STU_LAST_FAILED_LOGIN` datetime NOT NULL DEFAULT '2000-01-01 00:00:00',
+  `STU_FAILED_LOGIN_COUNT` smallint(5) unsigned NOT NULL DEFAULT 0,
+  `STU_STATUS` tinyint(3) unsigned NOT NULL DEFAULT 1,
+  PRIMARY KEY (`STU_USER_NAME`),
+  KEY `IX_STU_TOKEN` (`STU_TOKEN`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+-- V 3.5.1
+
+DROP TABLE IF EXISTS `timed_message`;
+CREATE TABLE  `timed_message` (
+  `TIM_ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `TIM_TYPE` int(10) unsigned NOT NULL,
+  `TIM_CREATE` datetime NOT NULL,
+  `TIM_DUE` datetime DEFAULT NULL,
+  `TIM_TEXT` varchar(4096) NOT NULL,
+  `TIM_LOCK_ID` varchar(128) DEFAULT NULL,
+  `TIM_EXTRA_INDEX_INT` bigint(20) unsigned DEFAULT NULL,
+  `TIM_EXTRA_INDEX_STR` varchar(1000) DEFAULT NULL,
+  PRIMARY KEY (`TIM_ID`),
+  KEY `IX_TIM_TYPE` (`TIM_TYPE`),
+  KEY `IX_TIM_DUE` (`TIM_DUE`),
+  KEY `IX_TIM_EXTRA_INDEX_INT` (`TIM_EXTRA_INDEX_INT`),
+  KEY `IX_TIM_EXTRA_INDEX_STR` (`TIM_EXTRA_INDEX_STR`),
+  KEY `IX_TIM_LOCK_ID` (`TIM_LOCK_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS `prc_timed_message_set_lock` $$
+CREATE PROCEDURE `prc_timed_message_set_lock`(msgType INTEGER, lockId VARCHAR(128), nowTime DATETIME)
+BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+          ROLLBACK;
+    END;
+
+    START TRANSACTION;
+
+      UPDATE `timed_message` q1
+        JOIN (SELECT TIM_ID FROM `timed_message` WHERE TIM_TYPE=msgType AND TIM_DUE<=nowTime AND TIM_LOCK_ID is null ORDER BY TIM_DUE ASC LIMIT 1) q2 ON q1.TIM_ID=q2.TIM_ID
+      SET TIM_LOCK_ID=lockId;
+
+  COMMIT;
+
+END $$
+
+DELIMITER ;
+
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS `prc_timed_message_set_lock_all` $$
+CREATE PROCEDURE `prc_timed_message_set_lock_all`(msgType INTEGER, lockId VARCHAR(128), nowTime DATETIME)
+BEGIN
+   DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+          ROLLBACK;
+    END;
+
+    START TRANSACTION;
+
+      UPDATE `timed_message` q1
+        JOIN (SELECT TIM_ID FROM `timed_message` WHERE TIM_TYPE=msgType AND TIM_DUE<=nowTime AND TIM_LOCK_ID is null ORDER BY TIM_DUE ASC) q2 ON q1.TIM_ID=q2.TIM_ID
+      SET TIM_LOCK_ID=lockId;
+
+  COMMIT;
+
+END $$
+
+DELIMITER ;
+
+
+-- V 3.6.1
+
+DROP TABLE IF EXISTS `user_details`;
+CREATE TABLE  `user_details` (
+  `USD_USR_ID` varchar(128) NOT NULL,
+  `USD_TYPE` smallint(5) unsigned NOT NULL,
+  `USD_EMAIL` varchar(250) NOT NULL,
+  `USD_PHONE_NUM` varchar(45) NOT NULL DEFAULT '',
+  `USD_PHONE_COUNTRY_CODE` varchar(8) NOT NULL DEFAULT '',
+  `USD_IS_DELETED` tinyint(3) unsigned NOT NULL DEFAULT 0,
+  `USD_STATUS` tinyint(3) unsigned NOT NULL DEFAULT 1,
+  `USD_ROLE_ALLOW` int(10) unsigned NOT NULL DEFAULT 0,
+  `USD_ROLE_DENY` int(10) unsigned NOT NULL DEFAULT 0,
+  `USD_FIRST_NAME` varchar(100) NOT NULL,
+  `USD_LAST_NAME` varchar(100) NOT NULL,
+  `USD_IMAGE` varchar(200) NOT NULL DEFAULT '',
+  PRIMARY KEY (`USD_USR_ID`),
+  CONSTRAINT `FK_USD_USR_ID` FOREIGN KEY (`USD_USR_ID`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+INSERT INTO `user_details` (USD_USR_ID, USD_TYPE, USD_EMAIL, USD_FIRST_NAME, USD_LAST_NAME,
+                          USD_IS_DELETED, USD_STATUS, USD_PHONE_NUM, USD_PHONE_COUNTRY_CODE, USD_ROLE_ALLOW,
+                          USD_ROLE_DENY, USD_IMAGE)
+SELECT USR_ID, USR_TYPE, USR_EMAIL, USR_FIRST_NAME, USR_LAST_NAME, USR_IS_DELETED,
+                          USR_STATUS, USR_PHONE_NUM, USR_PHONE_COUNTRY_CODE, USR_ROLE_ALLOW, USR_ROLE_DENY,
+                          USR_IMAGE FROM `user`;
+
+ALTER TABLE `user` DROP COLUMN `USR_FIRST_NAME`;
+ALTER TABLE `user` DROP COLUMN `USR_LAST_NAME`;
+ALTER TABLE `user` DROP COLUMN `USR_IMAGE`;
+
+
+
+-- V 3.6.2
+
+DROP TABLE IF EXISTS `change_log`;
+CREATE TABLE  `change_log` (
+  `CHL_ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `CHL_TABLE` varchar(100) NOT NULL,
+  `CHL_RECORD_ID` varchar(1000) NOT NULL,
+  `CHL_OPERATION_TYPE` varchar(16) NOT NULL,
+  `CHL_OLD_VALUES` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `CHL_NEW_VALUES` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `CHL_CREATED_ON` datetime NOT NULL,
+  PRIMARY KEY (`CHL_ID`),
+  KEY `IX_CHL_TABLE` (`CHL_TABLE`),
+  KEY `XI_CHL_RECORD_ID` (`CHL_RECORD_ID`),
+  KEY `IX_CHL_CREATED_ON` (`CHL_CREATED_ON`) USING BTREE,
+  CONSTRAINT `change_log_chk_1` CHECK (json_valid(`CHL_OLD_VALUES`)),
+  CONSTRAINT `change_log_chk_2` CHECK (json_valid(`CHL_NEW_VALUES`))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+ALTER TABLE `file` CHANGE COLUMN `FIL_CREATE` `FIL_CREATED_ON` DATETIME NOT NULL;
+ALTER TABLE `file_multipart` CHANGE COLUMN `FMP_CREATE` `FMP_CREATED_ON` DATETIME NOT NULL;
+ALTER TABLE `image` CHANGE COLUMN `IMG_CREATE` `IMG_CREATED_ON` DATETIME NOT NULL;
+ALTER TABLE `log` CHANGE COLUMN `LOG_CREATE` `LOG_CREATED_ON` DATETIME NOT NULL;
+ALTER TABLE `login_log` CHANGE COLUMN `LOL_CREATE` `LOL_CREATED_ON` DATETIME NOT NULL;
+ALTER TABLE `mailer_queue` CHANGE COLUMN `MQU_CREATE` `MQU_CREATED_ON` DATETIME NOT NULL;
+ALTER TABLE `queue` CHANGE COLUMN `QUE_CREATE` `QUE_CREATED_ON` DATETIME NOT NULL;
+ALTER TABLE `system_user` CHANGE COLUMN `STU_CREATE` `STU_CREATED_ON` DATETIME NOT NULL;
+ALTER TABLE `timed_message` CHANGE COLUMN `TIM_CREATE` `TIM_CREATED_ON` DATETIME NOT NULL;
+ALTER TABLE `user` CHANGE COLUMN `USR_CREATE` `USR_CREATED_ON` DATETIME NOT NULL;
+
+
+ALTER TABLE `log` DROP INDEX `IX_LOG_CREATE`,
+ ADD INDEX IX_LOG_CREATED_ON USING BTREE(`LOG_CREATED_ON`);
+
+ALTER TABLE `user` CHANGE COLUMN `USR_IS_DELETED` `USR_DELETED_ON` DATETIME DEFAULT NULL;
+ALTER TABLE `user_details` CHANGE COLUMN `USD_IS_DELETED` `USD_DELETED_ON` DATETIME DEFAULT NULL;
+
+UPDATE `user` SET USR_DELETED_ON=null WHERE USR_EMAIL not like '%/DELETED' OR USR_DELETED_ON='0000-00-00 00:00:00';
+UPDATE `user` SET USR_DELETED_ON=NOW() WHERE USR_EMAIL like '%/DELETED';
+UPDATE `user_details` SET USD_DELETED_ON=null WHERE USD_EMAIL not like '%/DELETED' OR USD_DELETED_ON='0000-00-00 00:00:00';
+UPDATE `user_details` SET USD_DELETED_ON=NOW() WHERE USD_EMAIL like '%/DELETED';
+
+
+
+DELIMITER $$
+
+DROP TRIGGER IF EXISTS update_user_from_details$$
+CREATE TRIGGER update_user_from_details
+BEFORE UPDATE ON user_details
+FOR EACH ROW
+BEGIN
+
+    SET @skip_user_update = 1;
+
+    IF NEW.USD_TYPE               <> OLD.USD_TYPE               THEN UPDATE `user` SET USR_TYPE               = NEW.USD_TYPE               WHERE USR_ID = NEW.USD_USR_ID; END IF;
+    IF NEW.USD_EMAIL              <> OLD.USD_EMAIL              THEN UPDATE `user` SET USR_EMAIL              = NEW.USD_EMAIL              WHERE USR_ID = NEW.USD_USR_ID; END IF;
+    IF NEW.USD_PHONE_NUM          <> OLD.USD_PHONE_NUM          THEN UPDATE `user` SET USR_PHONE_NUM          = NEW.USD_PHONE_NUM          WHERE USR_ID = NEW.USD_USR_ID; END IF;
+    IF NEW.USD_PHONE_COUNTRY_CODE <> OLD.USD_PHONE_COUNTRY_CODE THEN UPDATE `user` SET USR_PHONE_COUNTRY_CODE = NEW.USD_PHONE_COUNTRY_CODE WHERE USR_ID = NEW.USD_USR_ID; END IF;
+    IF NEW.USD_STATUS             <> OLD.USD_STATUS             THEN UPDATE `user` SET USR_STATUS             = NEW.USD_STATUS             WHERE USR_ID = NEW.USD_USR_ID; END IF;
+    IF NEW.USD_ROLE_ALLOW         <> OLD.USD_ROLE_ALLOW         THEN UPDATE `user` SET USR_ROLE_ALLOW         = NEW.USD_ROLE_ALLOW         WHERE USR_ID = NEW.USD_USR_ID; END IF;
+    IF NEW.USD_ROLE_DENY          <> OLD.USD_ROLE_DENY          THEN UPDATE `user` SET USR_ROLE_DENY          = NEW.USD_ROLE_DENY          WHERE USR_ID = NEW.USD_USR_ID; END IF;
+
+    IF (NEW.USD_DELETED_ON <> OLD.USD_DELETED_ON OR (NEW.USD_DELETED_ON is null AND OLD.USD_DELETED_ON is not null) OR (NEW.USD_DELETED_ON is not null AND  OLD.USD_DELETED_ON is null)) THEN
+      UPDATE `user` SET USR_DELETED_ON = NEW.USD_DELETED_ON WHERE USR_ID = NEW.USD_USR_ID;
+    END IF;
+
+    SET @skip_user_update = NULL;
+
+END $$
+
+DROP TRIGGER IF EXISTS deny_update_user_details_from_user$$
+CREATE TRIGGER deny_update_user_details_from_user
+BEFORE UPDATE ON user
+FOR EACH ROW
+BEGIN
+
+    IF @skip_user_update IS NULL THEN
+        IF NEW.USR_TYPE               <> OLD.USR_TYPE               THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot update USR_TYPE. Must update from user_details'; END IF;
+        IF NEW.USR_EMAIL              <> OLD.USR_EMAIL              THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot update USR_EMAIL. Must update from user_details'; END IF;
+        IF NEW.USR_PHONE_NUM          <> OLD.USR_PHONE_NUM          THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot update USR_PHONE_NUM. Must update from user_details'; END IF;
+        IF NEW.USR_PHONE_COUNTRY_CODE <> OLD.USR_PHONE_COUNTRY_CODE THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot update USR_PHONE_COUNTRY_CODE. Must update from user_details'; END IF;
+        IF NEW.USR_STATUS             <> OLD.USR_STATUS             THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot update USR_STATUS. Must update from user_details'; END IF;
+        IF NEW.USR_ROLE_ALLOW         <> OLD.USR_ROLE_ALLOW         THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot update USR_ROLE_ALLOW. Must update from user_details'; END IF;
+        IF NEW.USR_ROLE_DENY          <> OLD.USR_ROLE_DENY          THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot update USR_ROLE_DENY. Must update from user_details'; END IF;
+
+        IF (NEW.USR_DELETED_ON <> OLD.USR_DELETED_ON OR (NEW.USR_DELETED_ON is null AND OLD.USR_DELETED_ON is not null) OR (NEW.USR_DELETED_ON is not null AND  OLD.USR_DELETED_ON is null)) THEN
+          SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot update USR_DELETED_ON. Must update from user_details';
+        END IF;
+    END IF;
+
+END $$
+
+DELIMITER ;
+
+
+-- V 3.6.8
+
+DROP TABLE IF EXISTS `bulk_action`;
+CREATE TABLE  `bulk_action` (
+  `BAC_ID` varchar(128) NOT NULL,
+  `BAC_SESSION_INFO` varchar(2000) NOT NULL,
+  `BAC_STATUS` int(11) NOT NULL,
+  `BAC_MODULE` varchar(200) NOT NULL,
+  `BAC_METHOD` varchar(200) NOT NULL,
+  `BAC_DATA` text NOT NULL,
+  `BAC_INFO` text NOT NULL,
+  `BAC_CREATED_ON` datetime NOT NULL,
+  `BAC_COMPLETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`BAC_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+-- V 3.7.1
+
+ALTER TABLE `user` ADD COLUMN `USR_2ND_FACTOR_KEY` varchar(128) DEFAULT NULL AFTER `USR_ROLE_DENY`;
+ALTER TABLE `user` ADD COLUMN `USR_2ND_FACTOR_KEY_VALID_THRU` datetime DEFAULT NULL AFTER `USR_2ND_FACTOR_KEY`;
+ALTER TABLE `user` ADD COLUMN `USR_2ND_FACTOR_VERIFICATION` varchar(250) DEFAULT NULL AFTER `USR_2ND_FACTOR_KEY_VALID_THRU`;
+ALTER TABLE `user` ADD COLUMN `USR_PENDING_FACTOR` varchar(250) DEFAULT NULL AFTER `USR_2ND_FACTOR_VERIFICATION`;
+ALTER TABLE `user` ADD COLUMN `USR_PASSWORD_CREATED_ON` datetime DEFAULT NULL AFTER `USR_PENDING_FACTOR`;
+
+
+-- V 3.7.4
+
+ALTER TABLE `log` ADD COLUMN `LOG_DB_TIME` DATETIME NOT NULL DEFAULT NOW() AFTER `LOG_INTERNAL_STATUS`;
+
+DROP TABLE IF EXISTS `debug_log`;
+CREATE TABLE  `debug_log` (
+  `DLG_ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `DLG_CREATED_ON` datetime NOT NULL,
+  `DLG_REQUEST_NAME` varchar(128) NOT NULL,
+  `DLG_REQUEST_UID` varchar(128) NOT NULL,
+  `DLG_STRING` longtext NOT NULL,
+  `DLG_DB_TIME` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`DLG_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+-- V 3.7.10
+
+ALTER TABLE `file` DROP COLUMN `FIL_CODE`;
+ALTER TABLE `file` DROP COLUMN `FIL_UPLOADED`;
+
+ALTER TABLE `file` ADD COLUMN `FIL_FILE_SIZE` INTEGER UNSIGNED NOT NULL DEFAULT 0 AFTER `FIL_ORIG_FILE_NAME`;
+ALTER TABLE `file` ADD COLUMN `FIL_USR_ID` VARCHAR(128) AFTER `FIL_ID`,
+ ADD CONSTRAINT `FK_FIL_USR_ID` FOREIGN KEY `FK_FIL_USR_ID` (`FIL_USR_ID`)
+    REFERENCES `user` (`USR_ID`)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT;
+
+ALTER TABLE `file_multipart` ADD COLUMN `FMP_USR_ID` VARCHAR(128) AFTER `FMP_ID`,
+ ADD CONSTRAINT `FK_FMP_USR_ID` FOREIGN KEY `FK_FMP_USR_ID` (`FMP_USR_ID`)
+    REFERENCES `user` (`USR_ID`)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT;
+
+
+-- V 3.7.11
+
+DROP TABLE IF EXISTS `user_online_status`;
+CREATE TABLE  `user_online_status` (
+  `UOS_USR_ID` varchar(128) NOT NULL,
+  `UOS_SERVICE_ID` int(10) unsigned NOT NULL,
+  `UOS_CONNECTED_ON` datetime NOT NULL,
+  PRIMARY KEY (`UOS_USR_ID`, `UOS_SERVICE_ID`),
+  KEY `FK_UOS_USR_ID` (`UOS_USR_ID`),
+  CONSTRAINT `FK_UOS_USR_ID` FOREIGN KEY (`UOS_USR_ID`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+DROP TABLE IF EXISTS `user_online_log`;
+CREATE TABLE  `user_online_log` (
+  `UOL_ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `UOL_USR_ID` varchar(128) NOT NULL,
+  `UOL_SERVICE_ID` int(10) unsigned NOT NULL,
+  `UOL_DATETINE` datetime NOT NULL,
+  `UOL_ACTION` varchar(64) NOT NULL,
+  PRIMARY KEY (`UOL_ID`),
+  KEY `FK_UOL_USR_ID` (`UOL_USR_ID`),
+  CONSTRAINT `FK_UOL_USR_ID` FOREIGN KEY (`UOL_USR_ID`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+-- --------------------------------------------------
+-- V 3.8
+-- --------------------------------------------------
+
+
+-- V 3.8.1
+
+-- NOTICE -------------------------------------------
+-- After upgrading code from Infra and updating the DB, need to make changes in the project code:
+
+-- The following function MOVED from  $Utils to $Files:
+-- saveFileFromBase64 - added fileOwner, accessLevel
+-- getFileExt
+-- getMimeTypeByExt
+-- saveFileInContainer
+-- saveFile
+-- copyFile
+-- saveImageFromBase64 - added fileOwner, accessLevel
+-- createDownloadUrl
+
+-- The following function were REMOVED
+-- $Utils.deleteImage
+-- $Utils.saveMainAndOtherImages
+-- Config images_path
+
+-- The following function were UPDATED
+-- $Utils.getFile (use $Files.getFileFromContainer - NOTICE: returns content)
+-- $Utils.saveNewFileOrKeepOld added fileOwner, accessLevel
+-- $Utils.saveFilesList added fileOwner, accessLevel
+-- $Utils.saveImagesList added fileOwner, accessLevel
+-- $Utils.saveNewImageOrKeepOld added fileOwner, accessLevel
+-- $Imaging.createDefaultAvatarForName added fileOwner, accessLevel
+
+-- Need to LOOK FOR the following phrases and make sure they are removed or comply with current version
+-- \`file\`
+-- \`image\`
+-- files_path
+-- files_url
+
+-- OTHER
+-- Copy all files from other folder (images...) to files folder
+
+
+ALTER TABLE `file` ADD COLUMN `FIL_MIME_TYPE` VARCHAR(200) NOT NULL DEFAULT '' AFTER `FIL_FILE_SIZE`;
+ALTER TABLE `file` ADD INDEX IX_FIL_FILE_NAME(`FIL_FILE_NAME`);
+ALTER TABLE `file` ADD COLUMN `FIL_ACCESS_LEVEL` VARCHAR(32) NOT NULL AFTER `FIL_MIME_TYPE`;
+
+UPDATE `file` SET FIL_ACCESS_LEVEL=*** default access level ***
+INSERT INTO `file` (FIL_ID, FIL_USR_ID, FIL_CREATED_ON, FIL_FILE_NAME, FIL_ORIG_FILE_NAME, FIL_FILE_SIZE, FIL_MIME_TYPE, FIL_ACCESS_LEVEL)
+            SELECT IMG_ID, null, IMG_CREATED_ON, IMG_FILE_NAME, IMG_ORIG_FILE_NAME, 0, '', 'public' FROM `image`;
+
+DROP TABLE IF EXISTS `image`;
+
+
+-- V 3.8.8
+
+ALTER TABLE `debug_log` ADD INDEX IX_DLG_REQUEST_NAME(`DLG_REQUEST_NAME`);
+ALTER TABLE `debug_log` ADD INDEX IX_DLG_CREATED_ON(`DLG_CREATED_ON`);

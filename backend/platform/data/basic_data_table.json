@@ -1,0 +1,6 @@
+{
+    "1":        {"name": {"en": "Item 1"},      "optional_property": "Value 1",     "define": "BASIC_DATA_ITEM_1" },
+    "2":        {"name": {"en": "Item 2"},      "optional_property": "Value 2",     "define": "BASIC_DATA_ITEM_2" },
+    "3":        {"name": {"en": "Item 3"},      "optional_property": "Value 3",     "define": "BASIC_DATA_ITEM_3" },
+    "4":        {"name": {"en": "Item 4"},      "optional_property": "Value 4",     "define": "BASIC_DATA_ITEM_4" }
+}

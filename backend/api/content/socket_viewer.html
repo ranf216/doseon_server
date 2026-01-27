@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+    <head>
+		<title>{{system}} {{environment}} - SocketViewer</title>
+		<link rel="shortcut icon" href="/favicon.ico?src=socket_viewer" />
+		<script type="text/javascript" src="/public/jquery-1.8.2.mini.js"></script>
+		<script type="text/javascript" src="/public/jquery.cookie.js"></script>
+        <script src="{{socket_url}}/socket.io/socket.io.js"></script>
+
+		<style type="text/css">
+			html, body {height: 100%; width: 100%; margin: 0;  padding:0;}
+			#outer {height: 100%; width: 100%; margin: 0;  padding:0;}
+            #header {padding: 5px;}
+
+			#content {position: absolute; bottom: 0; width: 100%; overflow: scroll; font: 16px "courier new";}
+			#logout {background-color: #f7ae66; border: #df7002 2px solid; font-weight: bold; cursor: pointer; {{enable_system_login}} }
+            #token, #message {width: 450px;}
+
+            .status {width: 130px; font-weight: bold; padding: 2px 6px 2px 6px; text-align: center;}
+            .status_connected {border: #015f25 2px solid; color: #015f25; background-color: #c6f3d0;}
+            .status_not_connected {border: #b51a00 2px solid; color: #b51a00; background-color: #ffdad8;}
+            .content-line {padding-top: 2px; padding-bottom: 2px;}
+            .content-line-echo {color: #9e00b3;}
+            .content-line-token {color: #df7002;}
+            .content-line-in {color: #009c00;}
+            .content-line-out {color: #e32400;}
+
+			.spacer {width: 60px;}
+			.inline_spacer {width: 100px; display: inline-block;}
+			.vspacer {font-size: 1px; height: 6px;}
+            .large_vspacer {font-size: 1px; height: 20px;}
+		</style>
+
+        <script type="text/javascript">
+            let socket = null;
+
+			$(document).ready(function()
+			{
+				const element = document.getElementById("inner_fixed");
+				const observer = new ResizeObserver(entries =>
+				{
+					for (let entry of entries)
+					{
+						console.log('Height changed to', entry.contentRect.height);
+						$("#content").css("top", entry.contentRect.height);
+						// Your callback here
+					}
+				}).observe(element);
+
+
+                appendLine(`<div>Ready...</div>`);
+
+                socket = io("{{socket_url}}", {
+                                                        transports:["websocket"],
+                                                        cors: {
+                                                            origin: "*",
+                                                        },
+                                                    });
+                socket.on('message', (data) => {
+                    appendLine(`<div class="content-line content-line-in">In&nbsp;&nbsp;&nbsp;&nbsp;>>> ${data}</div>`);
+                });
+
+                socket.on('echo', (data) => {
+                    appendLine(`<div class="content-line content-line-echo">Echo&nbsp;&nbsp;>>> ${data}</div>`);
+                });
+
+                socket.on('#token', (data) => {
+                    console.log(`Token response: ${data}`);
+                    appendLine(`<div class="content-line content-line-token">Token&nbsp;>>> ${data}</div>`);
+
+                    const rc = JSON.parse(data);
+                    if (rc && rc.rc == 0)
+                    {
+                        $("#handshake").prop('disabled', true);
+                        $("#sendMessage").prop('disabled', false);
+                        $("#echoMessage").prop('disabled', false);
+                        $("#message").focus();
+                    }
+                });
+
+                socket.on('connect', () => {
+                    console.log('Connected');
+                    appendLine(`<div>Connected</div>`);
+                    $(".status").addClass("status_connected");
+                    $(".status").removeClass("status_not_connected");
+                    $(".status").html("Connected");
+
+                    $("#handshake").prop('disabled', false);
+                    $("#token").focus();
+                });
+
+                socket.on("disconnect", () => {
+                    console.log(socket.id); // undefined
+                    appendLine(`<div>Disconnected</div>`);
+                    $(".status").removeClass("status_connected");
+                    $(".status").addClass("status_not_connected");
+                    $(".status").html("Not Connected");
+
+                    $("#handshake").prop('disabled', true);
+                    $("#sendMessage").prop('disabled', true);
+                    $("#echoMessage").prop('disabled', true);
+                });
+			});
+
+            function sendToken()
+            {
+                const token = $("#token").val()
+                appendLine(`<div class="content-line content-line-token">Token&nbsp;<<< ${token}</div>`);
+                socket.emit('#token', token);
+            }
+
+            function sendMessage()
+            {
+                const message = $("#message").val()
+                appendLine(`<div class="content-line content-line-out">Out&nbsp;&nbsp;&nbsp;<<< ${message}</div>`);
+                socket.emit('message', message)
+                $("#message").val("");
+                $("#message").focus();
+            }
+
+            function echoMessage()
+            {
+                const message = $("#message").val()
+                appendLine(`<div class="content-line content-line-echo">Echo&nbsp;&nbsp;<<< ${message}</div>`);
+                socket.emit('echo', message)
+                $("#message").val("");
+                $("#message").focus();
+            }
+
+            function clearAllMessage()
+            {
+                $("#content").html("");
+            }
+
+            function appendLine(line)
+            {
+                $("#content").append(line);
+                $('#content').scrollTop($('#content')[0].scrollHeight);
+            }
+
+
+			function doOnLogout()
+			{
+				if (!confirm("Are you sure you want to logout?"))
+				{
+					return;
+				}
+
+                $.ajax({
+                        url: "{{api_url}}",
+                        type: "POST",
+                        data: JSON.stringify({"#request": "User/system_logout", "token": jQuery.cookie("system_token")}),
+                        dataType: 'json',
+                        headers: { 'Content-Type': 'application/json' },
+                        success: function (json)
+                        {
+                            if (json.rc == undefined)
+                            {
+                                alert(JSON.stringify(json));
+                                return;
+                            }
+                            if (json.rc != 0)
+                            {
+                                alert(json.message);
+                                return;
+                            }
+
+            				jQuery.removeCookie("system_token");
+                            window.location = "system_login/socket_viewer";
+                        },
+                        error: function()
+                        {
+                            alert(arguments[0].responseText);
+                        }
+                });
+			}
+        </script>
+    </head>
+    <body>
+        <div id="outer">
+            <div id="inner_fixed">
+                <div id="header">
+                    <div>{{getWebClientMessages}}{{getWebClientEnvironment}}</div>
+                    <div><input type="button" id="logout" onclick="doOnLogout()" value="Logout" /></div>
+                    <div class="large_vspacer"></div>
+                    <div id="connection">
+                        <table cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td>
+                                    Token: <input type="text" id="token" />
+                                    <button id="handshake" onclick="sendToken()" disabled="disabled">Handshake</button>
+                                </td>
+                                <td><div class="spacer"></div></td>
+                                <td><div class="status status_not_cobbected">Not Connected</div></td>
+                                <td><div class="spacer"></div></td>
+                                <td>
+                                    Message: <input type="text" id="message" />
+                                    <button id="sendMessage" onclick="sendMessage()" disabled="disabled">Send</button>
+                                    <button id="echoMessage" onclick="echoMessage()" disabled="disabled">Echo</button>
+                                    <div class="inline_spacer"></div>
+                                    <button id="clear" onclick="clearAllMessage()">Clear</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <hr />
+                </div>
+            </div>
+        
+            <div id="content">
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,7 @@
+1. Utils.setCurrUserLang "$ERRS = require(file);" Errs is global, need to solve for session
+2. config_funcs has private members that are shared with all sessions. will result in wrong configs on multi envs. need session fix like in database
+4. Date.getTimeZoneDiff is missing
+5. AWS.copyFile is implemented as get/save - copyObject has access denied
+6. AWS.renameFile is implemented as copy/delete - copyObject with MetadataDirective=REPLACE has access denied
+9. System - send_mail, get_service_status, set_service_active - not implemented
+10. Imaging - autofitTextInBox is not working well
