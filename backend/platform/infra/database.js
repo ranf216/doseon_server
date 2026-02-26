@@ -273,7 +273,7 @@ module.exports = {
         }
 	},
 
-	executeQuery: function(query, params, logQueryAndParams = false)
+	executeQuery: function(query, params, logQueryAndParams = false, forceQuery = false)
 	{
 		if (logQueryAndParams)
 		{
@@ -299,7 +299,7 @@ module.exports = {
             try
             {
                 let conn = sessConn.dbConn;
-                const [rows, fields] = await conn.execute(query, params);
+                const [rows, fields] = (forceQuery ? await conn.query(query) : await conn.execute(query, params));
 
                 if (typeof rows.insertId !== 'undefined')
                 {

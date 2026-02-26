@@ -1,7 +1,7 @@
 module.exports = {
 	// Version
 	"api_version"							: "1",
-	"infra_version"							: "3.8.11",
+	"infra_version"							: "3.8.18",
 
 	// Server online - If set to false, no API is able to run!!!
 	"api_server_active"						: true,
@@ -91,7 +91,7 @@ module.exports = {
 	"log_activate_truncated_params"			: false,
 	"use_2factor_auth"						: false,
 	"password_valid_for_seconds"			: 7776000, // 90 days * 60 * 60 * 24
-	"open_api_passcode"						: "{Any Passcode}",
+	"#open_api_passcode"					: "{Any Passcode}",
 	"password_criteria"						: {
 												"force_criteria"						: false,
 												"min_chars"								: 8,
@@ -101,11 +101,15 @@ module.exports = {
 												"has_number"							: true,
 												"has_special"							: true,
 											},
+	"auth_grant"							: {
+												"is_enabled"							: false,
+												"valid_for_seconds"						: 2592000, // 30 days
+											},
 
 	// Database
-	"#db_user"								: "root",
+	"#db_user"								: "{user name}",
 	"db_schema"								: "basic_schema",
-	"#db_pwd"								: "admin",
+	"#db_pwd"								: "{password}",
 	"db_instance"							: "localhost",
 	"db_port"								: "3306",
 	"db_pool_size"							: 50,
@@ -168,8 +172,8 @@ module.exports = {
 	// SMS
 	"sms"									: {
 												"provider"								: "{provider name}", // twilio
-												"auth_id"								: "{auth_id}",
-												"auth_token"							: "{Auth token}",
+												"#auth_id"								: "{auth_id}",
+												"#auth_token"							: "{Auth token}",
 												"messaging_service_sid"					: "{Messaging service sid}",
 												"sender_num"							: "{Sender num}",
 												"send_timeout_ms"						: 5000,
@@ -186,10 +190,10 @@ module.exports = {
 												"send_otp_to_debug_log"					: true,
 												"override_otp_code_verification"		: true,
 												"enable_backdoor_code"					: false,
-												"backdoor_code"							: "{Backdoor Code}",
-												"predef_phone_nums"						: ["Apple", "Google"],
-												"predef_email_addresses"				: ["Apple", "Google"],
-												"predef_otp_code"						: "1234",
+												"#backdoor_code"						: "{Backdoor Code}",
+												"#predef_phone_nums"					: "{Array of phone numbers}",
+												"#predef_email_addresses"				: "{Array of email addresses}",
+												"#predef_otp_code"						: "{Predefined otp code}",
 											},
 
 	"avatar"								: {
@@ -200,8 +204,8 @@ module.exports = {
 											},
 
 	"cipher"								: {
-												"secret_key"							: "{Secret Key}",
-												"secret_iv"								: "{Secret IV}",
+												"#secret_key"							: "{Secret Key}",
+												"#secret_iv"							: "{Secret IV}",
 												"enc_method"							: "aes-256-cbc",
 											},
 
@@ -227,7 +231,7 @@ module.exports = {
 	"apple_api_url"							: "ssl://gateway.push.apple.com:2195",
 
 	// FCM / Google API		
-	"#google_fb_key"          				: $Const.CONFIG_PATH + "/firebase.json",
+	"#google_fb_key"          				: "{Path to firebase.json}",
 	"#google_api_key"						: "{Google API Key}",
 	"google_api_protocol"					: "https",
 	"google_api_lang"						: "en",

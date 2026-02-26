@@ -168,6 +168,11 @@
 		
 			function doOnClick(cell, str)
 			{
+                if (window.getSelection().toString().length > 0)
+                {
+                    return;
+                }
+
 				switch (cell)
 				{
 					case 1:
@@ -330,6 +335,11 @@
 
 			function copyToClipboard(text)
 			{
+                if (window.getSelection().toString().length > 0)
+                {
+                    return;
+                }
+
 				if (navigator.clipboard)
 				{
 					navigator.clipboard.writeText(text)

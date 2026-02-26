@@ -17,7 +17,7 @@ function _impersonate(sessionInfo)
 
     let session = $HttpContext.get("session");
 
-    rc = session.impersonate(sessionInfo.userId, sessionInfo.originalUserType);
+    rc = session.impersonate(sessionInfo.userId);
     if ($Err.isERR(rc))
     {
         return rc;

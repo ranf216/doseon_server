@@ -69,6 +69,9 @@ module.exports = {
 	"ERR_INVALID_FACTOR_TYPE"							: {"rc" : 246,	"message" : "Invalid factor type"},
 	"ERR_INVALID_PASSWORD"								: {"rc" : 247,	"message" : "Invalid password"},
 	"ERR_NEW_PASSWORD_CANNOT_BE_SAME_AS_CURRENT"		: {"rc" : 248,	"message" : "The new password cannot be the same as the current password"},
+	"ERR_AUTH_GRANT_IS_NOT_ENABLED"						: {"rc" : 249,	"message" : "Authentication grant is not enabled"},
+	"ERR_INVALID_AUTH_GRANT"							: {"rc" : 250,	"message" : "Invalid authentication grant"},
+	"ERR_AUTH_GRANT_IS_EXPIRED"							: {"rc" : 251,	"message" : "The authentication grant has expired"},
 
 	// Image
 	"ERR_IMAGE_NOT_FOUND"								: {"rc" : 301,	"message" : "image not found"},
@@ -121,6 +124,7 @@ module.exports = {
 	"ERR_DB_INVALID_TABLE_NAME"							: {"rc" : 404,	"message" : "DB invalid table name"},
 	"ERR_DB_TABLE_PRIMARY_KEY_NOT_SUPPORTED"			: {"rc" : 405,	"message" : "DB table's primary key is not supported"},
 	"ERR_DB_INVALID_ROW_ID"								: {"rc" : 406,	"message" : "DB invalid row id"},
+	"ERR_DB_INVALID_QUERY"								: {"rc" : 407,	"message" : "DB invalid query"},
 
 	// Cache
 	"ERR_CACHE_GENERAL_ERROR"							: {"rc" : 450,	"message" : "cache general error"},

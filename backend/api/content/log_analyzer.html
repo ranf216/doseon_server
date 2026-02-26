@@ -36,9 +36,12 @@
             .values_title {font-weight: bold;}
             .update_row_sep {border-bottom: #444444 1px solid;}
             .update_val_sep {border-bottom: #aaaaaa 1px solid;}
+			.filter_data:hover {text-decoration: underline;}
+			#query_content tr:hover {background: #f0f0f0; font-weight: bold;}
 
             .spacer1 {width: 1px; display: inline-block;}
             .spacer25 {width: 25px; display: inline-block;}
+            .spacer50 {width: 50px; display: inline-block;}
 			.spacer90 {width: 90px; display: inline-block;}
             .spacer120 {width: 120px; display: inline-block;}
 			.inline_spacer {width: 100px; display: inline-block;}
@@ -54,9 +57,16 @@
 			.type_DEBUG {color: #00a000;}
 			.type_{{project}} {color: #7137f7;}
 			.simple_data {cursor: default;}
+			.filter_data {cursor: pointer;}
+			.filter_data:hover {text-decoration: underline;}
 		</style>
 
         <script type="text/javascript">
+            let filterIp = "";
+            let filterReq = "";
+            let filterReqId = "";
+            let filterType = "";
+
 			$(document).ready(function()
 			{
 				const element = document.getElementById("inner_fixed");
@@ -134,7 +144,7 @@
                             "substring": substring, "lines": lines, "date_from": date_from, "date_to": date_to, "request": request,
                             "set_request": chk_Rq, "set_response": chk_Rs, "set_other": chk_Otr, "is_error": chk_ERR, "is_rc_error": chk_RCE}, rc =>
                 {
-                    let content = `<table cellpadding="5" cellspacing="0" border="0">`;
+                    let content = `<table cellpadding="5" cellspacing="0" border="0" id="query_content">`;
 
                     if (rc.rc == 0)
                     {
@@ -147,13 +157,17 @@
                         {
                             let isErr = (call.type == "RESPONSE" && call.text.indexOf("\"rc\":0") === -1);
 
-                            content += `<tr class="type_${call.type}">
+                            let requestName = call.request_name.split("/").join("_");
+                            let ipStr = call.ip_address.replace(/[\.,:]/g, "_");
+                            let classes = `ip_${ipStr} type_${call.type} req_${requestName} reqid_${call.uid}`;
+
+                            content += `<tr class="type_${call.type} ${classes}">
                                             <td class="simple_data">${call.datetime}</td>
-                                            <td class="simple_data">${call.ip_address}</td>
-                                            <td class="simple_data">${call.type}</td>
-                                            <td class="simple_data">${call.request_name}</td>
-                                            <td class="simple_data">${call.uid}</td>
-                                            <td class="simple_data ${isErr ? "type_FAILED_RESPONSE" : ""}" onclick="copyToClipboard($(this).html())">${call.text}</td>
+                                            <td class="filter_data" onclick='doOnClick(1, "${call.ip_address}")'>${call.ip_address}</td>
+                                            <td class="filter_data" onclick='doOnClick(2, "${call.type}")'>${call.type}</td>
+                                            <td class="filter_data" onclick='doOnClick(3, "${call.request_name}")'>${call.request_name}</td>
+                                            <td class="filter_data" onclick='doOnClick(4, "${call.uid}")'>${call.uid}</td>
+                                            <td class="simple_data ${isErr ? "type_FAILED_RESPONSE" : ""}" onclick="copyToClipboard($(this).html().trim())">${call.text}</td>
                                         </tr>`;
                         });
                     }
@@ -167,6 +181,23 @@
                     appendLine(content);
                     $('#content').scrollTop(0);
                 });
+            }
+
+            function reset_query()
+            {
+                $("#chk_Rq").attr('checked', true);
+                $("#chk_Rs").attr('checked', true);
+                $("#chk_Otr").attr('checked', true);
+                $("#chk_ERR").attr('checked', false);
+                $("#chk_RCE").attr('checked', false);
+
+                $("#substring").val("");
+                $("#lines").val("100");
+                $("#date_from").val("");
+                $("#date_to").val("");
+                $("#request").val("");
+
+                query();
             }
 
             function getChangeLog()
@@ -258,8 +289,42 @@
 
                     if (rc.rc == 0)
                     {
-                        content += `<tr><td>User Id</td><td>User Token</td><td>email</td><td>phone</td></tr>`;
-                        content += `<tr><td>${rc.user_id}</td><td>${rc.user_token}</td><td>${rc.email}</td><td>${rc.phone}</td></tr>`;
+                        let allUserTypes = "";
+                        let allUserRoles = "";
+
+                        Object.entries(rc.all_user_types).forEach(jsonObj =>
+                        {
+                            const id = jsonObj[0];
+                            const name = jsonObj[1];
+                            allUserTypes += `${id} - ${name}<br/>`;
+                        });
+
+                        if (rc.all_user_roles)
+                        {
+                            Object.entries(rc.all_user_roles).forEach(jsonObj =>
+                            {
+                                const id = jsonObj[0];
+                                const name = jsonObj[1];
+                                allUserRoles += `${id} - ${name}<br/>`;
+                            });
+                        }
+                        else
+                        {
+                            allUserRoles = "None";
+                        }
+
+                        const userRoles = rc.user_info.roles.join(",") || "-";
+
+                        content += `<tr><td>User Types</td><td>User Roles</td></tr>`;
+                        content += `<tr><td valign="top">${allUserTypes}</td><td valign="top">${allUserRoles}</td><td></td><td</td><td></td></tr>`;
+                        content += `<tr><td>&nbsp;</td><td>&nbsp;</td></tr>`;
+
+                        content += `<tr><td>User Id</td><td>${rc.user_info.user_id}</td></tr>`;
+                        content += `<tr><td>Token</td><td>${rc.user_info.user_token}</td></tr>`;
+                        content += `<tr><td>User Type</td><td>${rc.user_info.user_type} - ${rc.all_user_types[rc.user_info.user_type]}</td></tr>`;
+                        content += `<tr><td>Roles</td><td>${userRoles}</td></tr>`;
+                        content += `<tr><td>email</td><td>${rc.user_info.email}</td></tr>`;
+                        content += `<tr><td>phone</td><td>${rc.user_info.phone}</td></tr>`;
                     }
                     else
                     {
@@ -311,8 +376,66 @@
                 });
             }
 
+			function doOnClick(cell, str)
+			{
+                if (window.getSelection().toString().length > 0)
+                {
+                    return;
+                }
+
+				switch (cell)
+				{
+					case 1:
+						filterIp = (filterIp ? "" : str);
+					break;
+					case 2:
+                        filterType = (filterType ? "" : str);
+					break;
+					case 3:
+						filterReq = (filterReq ? "" : str);
+					break;
+					case 4:
+						filterReqId = (filterReqId ? "" : str);
+					break;
+				}
+				
+				filter();
+			}
+
+			function filter()
+			{
+				$("#query_content tr").show();
+
+				if (filterIp != "")
+				{
+                    let ipStr = filterIp.replace(/[\.,:]/g, "_");
+					$("#content tr:not(.ip_" + ipStr + ")").hide();
+				}
+
+				if (filterType != "")
+				{
+					$("#content tr:not(.type_" + filterType + ")").hide();
+				}
+
+				if (filterReq != "")
+				{
+                    let requestName = filterReq.split("/").join("_");
+					$("#content tr:not(.req_" + requestName + ")").hide();
+				}
+
+				if (filterReqId != "")
+				{
+					$("#content tr:not(.reqid_" + filterReqId + ")").hide();
+				}
+			}
+
 			function copyToClipboard(text)
 			{
+                if (window.getSelection().toString().length > 0)
+                {
+                    return;
+                }
+
 				if (navigator.clipboard)
 				{
 					navigator.clipboard.writeText(text)
@@ -395,7 +518,9 @@
                                 Log
                                 <span>Substring: <input type="text" id="substring" class="substring" /></span>
                                 <span class="alalyze_option_title_end">Lines: <input type="text" id="lines" class="lines" value="100" /></span>
-                                <div class="spacer90"></div>
+                                <div class="spacer25"></div>
+                                <button id="reset_query" onclick="reset_query()">Reset</button>
+                                <div class="spacer25"></div>
                                 <button id="query" onclick="query()">Query</button>
                             </div>
                             From: <input type="text" id="date_from" class="date" />

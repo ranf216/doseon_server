@@ -41,10 +41,10 @@ const SQL = class
 	{
 		if (this.alias == "")
 		{
-			return `FIL_ID file_id, FIL_USR_ID owner_id, FIL_FILE_NAME file_name, FIL_ACCESS_LEVEL access_level`;
+			return `FIL_ID file_id, FIL_USR_ID owner_id, FIL_FILE_NAME file_name, FIL_ACCESS_LEVEL access_level, FIL_ORIG_FILE_NAME orig_file_name`;
 		}
 
-		return `${this.alias}.FIL_ID ${this.prefix}file_id, ${this.alias}.FIL_USR_ID ${this.prefix}owner_id, ${this.alias}.FIL_FILE_NAME ${this.prefix}file_name, ${this.alias}.FIL_ACCESS_LEVEL ${this.prefix}access_level`;
+		return `${this.alias}.FIL_ID ${this.prefix}file_id, ${this.alias}.FIL_USR_ID ${this.prefix}owner_id, ${this.alias}.FIL_FILE_NAME ${this.prefix}file_name, ${this.alias}.FIL_ACCESS_LEVEL ${this.prefix}access_level, ${this.alias}.FIL_ORIG_FILE_NAME ${this.prefix}orig_file_name`;
 	}
 
 	join(isLeftOuter = true)
@@ -608,6 +608,19 @@ module.exports =
 
 		return `${$Config.get("download_url")}${$Cipher.encryptData(JSON.stringify(data))}`;
     },
+
+	getFileIdFromIdOrNameOrUrl(idOrNameOrUrl)
+	{
+		const fileName = this.getFileNameFromUrl(idOrNameOrUrl);
+
+		const fils = $Db.executeQuery(`SELECT FIL_ID FROM \`file\` WHERE FIL_ID=? OR FIL_FILE_NAME=? OR FIL_FILE_NAME=?`, [idOrNameOrUrl, idOrNameOrUrl, fileName]);
+		if (fils.length == 0)
+		{
+			return null;
+		}
+
+		return fils[0].FIL_ID;
+	},
 
 	getFileNameFromUrl(urlOrPath)
 	{

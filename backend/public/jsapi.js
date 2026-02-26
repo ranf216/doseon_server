@@ -388,7 +388,11 @@ function parseApiParams(params, arrayName = "", parentArrayName = "")
 		{
 			return;
 		}
-		
+		if (name.startsWith("&"))
+		{
+			return;
+		}
+
 		if (typeWithMod instanceof Object)
 		{
 			type = typeWithMod;

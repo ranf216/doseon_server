@@ -116,7 +116,7 @@ module.exports = class
         }
     }
 
-    impersonate(userId, userType, impersonateToken = false)
+    impersonate(userId, impersonateToken = false)
     {
         let vals = {};
         let rc = $ERRS.ERR_SUCCESS;
@@ -126,7 +126,7 @@ module.exports = class
             this.impersonatorStack = [];
         }
 
-        let usrs = $Db.executeQuery("SELECT USR_CREATED_ON, USR_TOKEN FROM `user` WHERE USR_ID=? AND USR_TYPE=?", [userId, userType]);
+        let usrs = $Db.executeQuery("SELECT USR_TOKEN, USR_TYPE FROM `user` WHERE USR_ID=?", [userId]);
         if (usrs.length == 0)
         {
             return $ERRS.ERR_USER_NOT_EXISTS;
@@ -135,7 +135,7 @@ module.exports = class
         this.impersonatorStack.push([this.userId, this.userType, this.token]);
 
         this.userId = userId;
-        this.userType = userType;
+        this.userType = usrs[0].USR_TYPE;
 
         if (impersonateToken)
         {

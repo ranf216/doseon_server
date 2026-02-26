@@ -13,6 +13,24 @@ module.exports =
 													"language"						: "o:s:"+$Config.get("default_language")+"***the user's app selected language in two characters code",
 												},
 
+			"login_with_auth_grant"				: {
+													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@protected"					: "password",
+													"grant_id"						: "s",
+													"auth_grant"					: "s",
+													"device_id"						: "o:s:*** the FCM device id for push notifications. You can also call update_device_info later",
+													"os_type"						: "o:i:0*** 1=Android, 2=iOS, 3=Web Browser",
+													"os_version"					: "o:s:*** the operating system version",
+													"device_model"					: "o:s:*** the device model",
+													"app_version"					: "o:s:*** the application version. VERY important",
+													"language"						: "o:s:"+$Config.get("default_language")+"***the user's app selected language in two characters code",
+												},
+
+			"get_login_auth_grant"				: {
+													"@acl"							: $Utils.allAuthedUserTypes(),
+													"#token"						: "s",
+												},
+
 			"register"							: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
 													"@protected"					: "password",
@@ -194,6 +212,12 @@ module.exports =
 													"@protected"					: "password",
 													"email"							: "s",
 													"password"						: "s",
+												},
+
+			"__create_null_user"					: {
+													"@acl"							: [$ACL.USER_TYPE_ADMIN],
+													"@mode"							: "superuser",
+													"#token"						: "s",
 												},
 
 			"system_login"						: {

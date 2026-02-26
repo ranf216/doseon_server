@@ -10,4 +10,6 @@ backend/api/tester.js
 backend/platform/data/rental_boat_statuses.json
 backend/platform/modules/u.js
 backend/platform/config/firebase.json
-dummy
+backend/platform/config/.config.js
+.clinerules
+memory-bank

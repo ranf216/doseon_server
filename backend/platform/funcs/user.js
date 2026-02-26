@@ -74,6 +74,108 @@ module.exports = class
 		return {...rc, ...vals};
 	}
 
+	login_with_auth_grant()
+	{
+		$Utils.setCurrUserLang(this.$language);
+
+		let vals = {};
+		let rc = $ERRS.ERR_SUCCESS;
+
+		let grant = null;
+
+		if (!$Config.get("auth_grant", "is_enabled"))
+		{
+			return $ERRS.ERR_AUTH_GRANT_IS_NOT_ENABLED;
+		}
+
+		const authGrant = $Cipher.decryptData(this.$auth_grant, this.$grant_id);
+		if ($Utils.empty(authGrant))
+		{
+			return $ERRS.ERR_INVALID_AUTH_GRANT;
+		}
+
+		try
+		{
+			grant = JSON.parse(authGrant);
+			if ($Utils.empty(grant))
+			{
+				return $ERRS.ERR_INVALID_AUTH_GRANT;
+			}
+		}
+		catch (err)
+		{
+			return $ERRS.ERR_INVALID_AUTH_GRANT;
+		}
+
+		if (grant.grant_id != this.$grant_id)
+		{
+			return $ERRS.ERR_INVALID_AUTH_GRANT;
+		}
+
+		if (new $Date(grant.issue_time).diff(new $Date()) > $Config.get("auth_grant", "valid_for_seconds"))
+		{
+			return $ERRS.ERR_AUTH_GRANT_IS_EXPIRED;
+		}
+
+
+		const usrs = $Db.executeQuery(`SELECT *
+									FROM \`user\`
+										JOIN \`user_details\` ON USR_ID=USD_USR_ID
+									WHERE USR_ID=? AND USR_STATUS=? AND USR_DELETED_ON is null`,
+								[grant.user_id, $Const.USER_STATUS_ACTIVE]);
+		if (usrs.length == 0)
+		{
+			return $ERRS.ERR_USER_NOT_FOUND;
+		}
+		const usr = usrs[0];
+
+
+		if ($Config.get("use_2factor_auth"))
+		{
+			const secondFactorKey = $Utils.uniqueHash();
+			const validSecs = $Config.get("otp_verification", "auth_key_valid_for_seconds");
+			const validTrhu = new $Date().addSeconds(validSecs).format();
+
+			$Db.executeQuery(`UPDATE \`user\` SET USR_2ND_FACTOR_KEY=?, USR_2ND_FACTOR_KEY_VALID_THRU=? WHERE USR_ID=?`, [secondFactorKey, validTrhu, usr.USR_ID]);
+
+			vals.second_factor_key = secondFactorKey;
+			vals.phone_num = $Utils.getObscuredPhone(usr.USR_PHONE_NUM, usr.USR_PHONE_COUNTRY_CODE);
+			vals.email = $Utils.getObscuredEmail(usr.USR_EMAIL);
+		}
+		else
+		{
+			rc = this._performLogin(usr, this.$device_id, this.$os_type, this.$os_version, this.$device_model, this.$app_version, this.$language);
+		}
+
+		return {...rc, ...vals};
+	}
+
+	get_login_auth_grant()
+	{
+		let vals = {};
+		let rc = $ERRS.ERR_SUCCESS;
+
+		if (!$Config.get("auth_grant", "is_enabled"))
+		{
+			return $ERRS.ERR_AUTH_GRANT_IS_NOT_ENABLED;
+		}
+
+		const grantId = $Utils.uniqueHash();
+
+		const grant = {
+			user_id: this.$Session.userId,
+			grant_id: grantId,
+			issue_time: $Utils.now(),
+		};
+
+		const authGrant = $Cipher.encryptData(JSON.stringify(grant), grantId);
+
+		vals.grant_id = grantId;
+		vals.auth_grant = authGrant;
+
+		return {...rc, ...vals};
+	}
+
 	register()
 	{
 		$Utils.setCurrUserLang(this.$language);
@@ -1017,6 +1119,49 @@ module.exports = class
 		$Db.executeQuery(`INSERT INTO \`user_details\` (USD_USR_ID, USD_EMAIL, USD_TYPE, USD_STATUS, USD_FIRST_NAME, USD_LAST_NAME)
 								VALUES (?, ?, ?, ?, ?, ?)`,
 									[userId, this.$email, $Const.USER_TYPE_ADMIN, $Const.USER_STATUS_ACTIVE, "Admin - " + this.$email, ""]);
+		if ($Db.isError())
+		{
+			$Db.rollbackTransaction();
+			return $Err.DBError("ERR_DB_INSERT_ERROR", $Db.lastErrorMsg());
+		}
+
+		$Db.commitTransaction();
+
+
+		vals['userid'] = userId;
+
+		return {...rc, ...vals};
+	}
+
+	__create_null_user()
+	{
+		let vals = {};
+		let rc = $ERRS.ERR_SUCCESS;
+
+
+		const isExist = $Db.executeQuery(`SELECT count(*) cnt FROM \`user\` WHERE USR_ID=?`, [$Const.NULL_USER_ID])[0].cnt;
+		if (isExist)
+		{
+			return $ERRS.ERR_USER_ALREADY_EXISTS;
+		}
+
+		
+		const userId = $Const.NULL_USER_ID;
+		const email = "null.user@null.user";
+
+		$Db.beginTransaction();
+
+		$Db.executeQuery(`INSERT INTO \`user\` (USR_ID, USR_EMAIL, USR_PASSWORD, USR_CREATED_ON, USR_TYPE, USR_STATUS, USR_LOGIN_AUTHORITY) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+									[userId, email, "", $Utils.now(), $Const.USER_TYPE_NA, $Const.USER_STATUS_ACTIVE, $Const.USER_LOGIN_AUTHORITY_EMAIL]);
+		if ($Db.isError())
+		{
+			$Db.rollbackTransaction();
+			return $Err.DBError("ERR_DB_INSERT_ERROR", $Db.lastErrorMsg());
+		}
+
+		$Db.executeQuery(`INSERT INTO \`user_details\` (USD_USR_ID, USD_EMAIL, USD_TYPE, USD_STATUS, USD_FIRST_NAME, USD_LAST_NAME)
+								VALUES (?, ?, ?, ?, ?, ?)`,
+									[userId, email, $Const.USER_TYPE_NA, $Const.USER_STATUS_ACTIVE, "Null", "User"]);
 		if ($Db.isError())
 		{
 			$Db.rollbackTransaction();

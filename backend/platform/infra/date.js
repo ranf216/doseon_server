@@ -148,30 +148,30 @@ module.exports = class
                             .replace(/e/g, "#e#")
                             .replace(/z/g, "#z#")
 
-                            .replace(/#Y#/g, year)
-                            .replace(/#y#/g, ("" + year).slice(-2))
-                            .replace(/#m#/g, ("0" + month).slice(-2))
-                            .replace(/#n#/g, month)
-                            .replace(/#F#/g, this._months[month - 1][1])
-                            .replace(/#M#/g, this._months[month - 1][0])
-                            .replace(/#t#/g, this._months[month - 1][2] + isLeapYear)
-                            .replace(/#L#/g, isLeapYear)
-                            .replace(/#d#/g, ("0" + date).slice(-2))
-                            .replace(/#j#/g, date)
-                            .replace(/#H#/g, ("0" + hours).slice(-2))
-                            .replace(/#G#/g, hours)
-                            .replace(/#h#/g, ("0" + hours12).slice(-2))
-                            .replace(/#g#/g, hours12)
-                            .replace(/#i#/g, ("0" + minutes).slice(-2))
-                            .replace(/#s#/g, ("0" + seconds).slice(-2))
-                            .replace(/#a#/g, (hours < 12 ? "am" : "pm"))
-                            .replace(/#A#/g, (hours < 12 ? "AM" : "PM"))
-                            .replace(/#D#/g, this._days[day][0])
-                            .replace(/#l#/g, this._days[day][1])
-                            .replace(/#S#/g, ordianl)
-                            .replace(/#w#/g, day)
-                            .replace(/#e#/g, this._timeZone)
-                            .replace(/#z#/g, (this._date.getTime() % 1000).toString().padStart(3, '0'));
+                            .replace(/#Y#/g, year)                                      // Y - Year 2024
+                            .replace(/#y#/g, ("" + year).slice(-2))                     // y - Year 24
+                            .replace(/#m#/g, ("0" + month).slice(-2))                   // m - Month 08
+                            .replace(/#n#/g, month)                                     // n - Month 8
+                            .replace(/#F#/g, this._months[month - 1][1])                // F - Month August
+                            .replace(/#M#/g, this._months[month - 1][0])                // M - Month Aug
+                            .replace(/#t#/g, this._months[month - 1][2] + isLeapYear)   // t - Days in month 31
+                            .replace(/#L#/g, isLeapYear)                                // L - Is leap year 1
+                            .replace(/#d#/g, ("0" + date).slice(-2))                    // d - Day 06
+                            .replace(/#j#/g, date)                                      // j - Day 6
+                            .replace(/#H#/g, ("0" + hours).slice(-2))                   // H - Hour (24) 09 / 21
+                            .replace(/#G#/g, hours)                                     // G - Hour (24) 9 / 21
+                            .replace(/#h#/g, ("0" + hours12).slice(-2))                 // h - Hour (12) 09 / 09
+                            .replace(/#g#/g, hours12)                                   // g - Hour (12)  9 / 9
+                            .replace(/#i#/g, ("0" + minutes).slice(-2))                 // i - Minutes 05
+                            .replace(/#s#/g, ("0" + seconds).slice(-2))                 // s - Seconds 07
+                            .replace(/#a#/g, (hours < 12 ? "am" : "pm"))                // a - am/pm
+                            .replace(/#A#/g, (hours < 12 ? "AM" : "PM"))                // A - AM/PM
+                            .replace(/#D#/g, this._days[day][0])                        // D - Day Sun
+                            .replace(/#l#/g, this._days[day][1])                        // l - Day Sunday
+                            .replace(/#S#/g, ordianl)                                   // S - Day ordinal st/nd/rd/th
+                            .replace(/#w#/g, day)                                       // w - Day 0
+                            .replace(/#e#/g, this._timeZone)                            // e - Time zone America/Los_Angeles
+                            .replace(/#z#/g, (this._date.getTime() % 1000).toString().padStart(3, '0')); // z - Milliseconds 016
 
         return dateStr;
     }
