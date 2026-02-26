@@ -15,7 +15,7 @@
 
 
 --
--- Create schema basic_schema
+-- Create schema doseon
 --
 
 --

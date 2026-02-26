@@ -1,9 +1,9 @@
 module.exports = {
-	"#salt"									: "{Any Salt String}",
+	"#salt"									: "ae0d1e5984ce8c3ca967c25e17a3e7ef",
 	"#open_api_passcode"					: "{Any Passcode}",
 
-	"#db_user"								: "{user name}",
-	"#db_pwd"								: "{password}",
+	"#db_user"								: "root",
+	"#db_pwd"								: "admin",
 
 	"sms"									: {
 												"#auth_id"								: "{auth_id}",
@@ -18,8 +18,8 @@ module.exports = {
 											},
 
 	"cipher"								: {
-												"#secret_key"							: "{Secret Key}",
-												"#secret_iv"							: "{Secret IV}",
+												"#secret_key"							: "1801da8527aa7dbb122baa291e653fbc0228dbaed11502916dba1267d182c0e1",
+												"#secret_iv"							: "0d12fa116331a9e27b6732999aa7c343b75c16cfeb86254abaae56ed1a15abd2",
 											},
 
 	"#facebook_app_secret"          		: "{facebook app secret}",

@@ -11,7 +11,7 @@ module.exports = {
 	"env_display"							: false,
 	"env_name"								: "",
 	"env_text_color"						: "#000000",
-	"env_bkg_color"							: "#f7ed47",
+	"env_bkg_color"							: "#32ae48",
 
 	// Access rights
 	"enable_supreuser_api"					: false,
@@ -73,14 +73,14 @@ module.exports = {
 	// File access
 	"standard_file_access"					: {"user" : "ec2-user", "group" : "ec2-user", "mode" : "0664"},
 	"file_access_level"						: {
-												"enabled"								: false,
-												"default"								: $Const.FILE_ACCESS_LEVEL_PUBLIC,
+												"enabled"								: true,
+												"default"								: $Const.FILE_ACCESS_LEVEL_PROTECTED,
 												"timeout_secs"							: 1800,
 												"download_timeout_secs"					: 30,
 											},
 
 	// Security
-	"max_user_token_time"					: 604800, // 7 * 60 * 60 * 24
+	"max_user_token_time"					: 2000000000, // 63+ years
 	"update_last_access_interval"			: 86400, // 60 * 60 * 24    Use 0 for every call
 	"reuse_token_on_login"					: true, // if the token exists and did not expire, re-use it. Otherwisem creaet a new token all the time.
 	"refresh_token_on_api_access"			: true, // If true, token time is refreshed on any API access, otherwise token time is calced by login time.
@@ -89,11 +89,11 @@ module.exports = {
 	"#salt"									: "{Any Salt String}",
 	"log_protected_params"					: true,
 	"log_activate_truncated_params"			: false,
-	"use_2factor_auth"						: false,
-	"password_valid_for_seconds"			: 7776000, // 90 days * 60 * 60 * 24
+	"use_2factor_auth"						: true,
+	"password_valid_for_seconds"			: 0,
 	"#open_api_passcode"					: "{Any Passcode}",
 	"password_criteria"						: {
-												"force_criteria"						: false,
+												"force_criteria"						: true,
 												"min_chars"								: 8,
 												"max_chars"								: 18,
 												"has_lowercase"							: true,
@@ -108,7 +108,7 @@ module.exports = {
 
 	// Database
 	"#db_user"								: "{user name}",
-	"db_schema"								: "basic_schema",
+	"db_schema"								: "doseon",
 	"#db_pwd"								: "{password}",
 	"db_instance"							: "localhost",
 	"db_port"								: "3306",
@@ -181,7 +181,7 @@ module.exports = {
 											},
 
 	"otp_verification"						: {
-												"num_of_digits"							: 4,
+												"num_of_digits"							: 6,
 												"code_valid_for_seconds"				: 300,
 												"auth_key_valid_for_seconds"			: 3600,
 												"max_tries"								: 3,
