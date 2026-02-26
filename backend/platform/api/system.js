@@ -151,4 +151,15 @@ module.exports =
 													"token"							: "s",
 												},
 
+			"run_query"							: {
+													"@acl"							: [$ACL.USER_TYPE_ADMIN],
+													"@mode"							: "test,unlogged",
+													"#token"						: "s",
+													"query"							: "s",
+													"params"						: {
+																						"type"							: "s",
+																						"value"							: "s",
+																					}
+												},
+
 };

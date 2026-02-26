@@ -10,26 +10,43 @@ module.exports =
 	{
 		let envs = require(configPath + "/environments.js");
 		let domain = ($Utils.isset($Const.ENV_DOMAIN) ? $Const.ENV_DOMAIN : $Const.HOST_NAME);
-		
+		let environment = "default";
+		let configFileName = "config.js";
+		let privateConfigFileName = ".config.js";
+
+
 		if ($Utils.isset(envs[domain]))
 		{
 			environment = envs[domain];
-			configFileName = environment + ".config.js";
+			configFileName = `${environment}.config.js`;
+			privateConfigFileName = `.${environment}.config.js`;
 
 			if (!fs.existsSync(configPath + "/" + configFileName))
 			{
 				configFileName = "config.js";
 			}
+
+			if (!fs.existsSync(configPath + "/" + privateConfigFileName))
+			{
+				privateConfigFileName = ".config.js";
+			}
 		}
-		else
+
+		if (!fs.existsSync(configPath + "/" + privateConfigFileName))
 		{
-			environment = "default";
-			configFileName = "config.js";
+			console.log(`Shutting down server due to critical error - Can't find .config file at: ${configPath}/${privateConfigFileName}`);
+			process.exit(1);
 		}
+
 
         let _envArr = {"environment": environment};
 		
 		this.confArr = require(configPath + "/" + configFileName);
+		validateConfigSecurity(this.confArr);
+
+		this.privConfArr = require(configPath + "/" + privateConfigFileName);
+		overrideConfigWithPrivateConfig(this.confArr, this.privConfArr);
+
 		this.confArrRuntime = require(configPath + "/runtime_config.js");
 		this.config = {..._envArr, ...this.confArr, ...this.confArrRuntime};
 	},
@@ -130,3 +147,46 @@ module.exports =
 		}
 	}
 };
+
+
+function validateConfigSecurity(confArr, parent = null)
+{
+	Object.entries(confArr).forEach(item =>
+	{
+		const key = item[0];
+		const val = item[1];
+
+		if (key.startsWith("#"))
+		{
+			if ((typeof val !== 'string' && !(val instanceof String)) || !val.startsWith("{") || !val.endsWith("}"))
+			{
+				const cleanKey = key.substring(1);
+				console.log(`Shutting down server due to critical error - private config data item is not secured: ${parent ? [parent, cleanKey].join("/") : cleanKey}`);
+				process.exit(1);
+			}
+		}
+
+		if ((typeof val === "object" || typeof val === 'function') && (val !== null))
+		{
+			validateConfigSecurity(val, key);
+		}
+	});
+}
+
+function overrideConfigWithPrivateConfig(confArr, privConfArr, parent = null)
+{
+	Object.entries(privConfArr).forEach(item =>
+	{
+		const key = item[0];
+		const val = item[1];
+
+		if ((typeof val === "object" || typeof val === 'function') && (val !== null))
+		{
+			validateConfigSecurity(confArr[key], val, key);
+		}
+		else
+		{
+			confArr[key] = val;
+		}
+	});
+}

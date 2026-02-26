@@ -183,7 +183,12 @@ function runAPI(json, reqQuery, session, isRun)
 			{
 				return;
 			}
-	
+
+			if (name.startsWith("&"))
+			{
+				name = name.substring(1);
+			}
+
 			let type;
 			let value;
 			

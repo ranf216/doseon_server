@@ -10,6 +10,7 @@
 *	function arrayCompare(a1, a2)
 *	function inArray(needle, haystack)
 *	function arrayValues(arrayObj)
+*	function deleteFromArray(needle, haystack)
 *	function empty(mixedVar)
 *	function strFormat(pattern, ...args)
 *	function clone(obj)
@@ -204,6 +205,15 @@ module.exports =
         });
         return tempObj;
     },
+
+	deleteFromArray: function(needle, haystack)
+	{
+		const index = haystack.indexOf(needle);
+		if (index !== -1) 
+		{
+			haystack.splice(index, 1);
+		}
+	},
 
     empty: function(mixedVar)
     {

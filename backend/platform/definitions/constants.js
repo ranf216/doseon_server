@@ -31,6 +31,7 @@ module.exports = {
 
     DATE_NULL                                               : "0000-00-00 00:00:00",
     S3_MIN_UPLOAD_PART_SIZE                                 : 5242880, // 5Mb
+    NULL_USER_ID                                            : "0000000000000000000000000000000000000000000000000000000000000000",
 
     ASYNC_API_SHORT_TIMEOUT_MS                              : 200,
     ASYNC_API_LONG_TIMEOUT_MS                               : 2000,

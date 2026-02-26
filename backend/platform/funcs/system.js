@@ -564,6 +564,8 @@ module.exports = class
 		let vals = {};
 		let rc = $ERRS.ERR_SUCCESS;
 
+		let user;
+
 		if (!this.$Session.tokenValidator.isValidSystemToken(this.$token))
 		{
 			return $ERRS.ERR_INVALID_USER_TOKEN;
@@ -571,7 +573,8 @@ module.exports = class
 
 		if ($Config.get("enable_login_log"))
 		{
-			const usrs = $Db.executeQuery(`SELECT USR_ID user_id, USR_TOKEN user_token, USR_EMAIL email, concat(USR_PHONE_COUNTRY_CODE, '-', USR_PHONE_NUM) phone
+			const usrs = $Db.executeQuery(`SELECT USR_ID user_id, USR_TOKEN user_token, USR_TYPE user_type, USR_ROLE_ALLOW, USR_ROLE_DENY,
+													USR_EMAIL email, concat(USR_PHONE_COUNTRY_CODE, '-', USR_PHONE_NUM) phone
 											FROM \`login_log\`
 												JOIN \`user\` ON LOL_USR_ID=USR_ID
 											WHERE LOL_USR_ID=? OR LOL_USR_TOKEN=?`, [this.$user_param, this.$user_param]);
@@ -580,11 +583,12 @@ module.exports = class
 				return $ERRS.ERR_USER_NOT_EXISTS;
 			}
 
-			vals = usrs[0];
+			user = usrs[0];
 		}
 		else
 		{
-			const usrs = $Db.executeQuery(`SELECT USR_ID user_id, USR_TOKEN user_token, USR_EMAIL email, concat(USR_PHONE_COUNTRY_CODE, '-', USR_PHONE_NUM) phone
+			const usrs = $Db.executeQuery(`SELECT USR_ID user_id, USR_TOKEN user_token, USR_TYPE user_type, USR_ROLE_ALLOW, USR_ROLE_DENY,
+													USR_EMAIL email, concat(USR_PHONE_COUNTRY_CODE, '-', USR_PHONE_NUM) phone
 											FROM \`user\`
 											WHERE USR_ID=? OR USR_TOKEN=?`, [this.$user_param, this.$user_param]);
 			if (usrs.length == 0)
@@ -592,8 +596,16 @@ module.exports = class
 				return $ERRS.ERR_USER_NOT_EXISTS;
 			}
 
-			vals = usrs[0];
+			user = usrs[0];
 		}
+
+		user.roles = $Utils.getCalculatedUserRoles(user.user_type, user.USR_ROLE_ALLOW, user.USR_ROLE_DENY);
+		delete user.USR_ROLE_ALLOW;
+		delete user.USR_ROLE_DENY;
+
+		vals.user_info = user;
+		vals.all_user_types = $Utils.getUserTypesList();
+		vals.all_user_roles = $Utils.getUserRolesList();
 
 		return {...rc, ...vals};
 	}
@@ -614,6 +626,53 @@ module.exports = class
 										ORDER BY DLG_CREATED_ON DESC`, [new $Date().addDays(-1).format(), "Debug/OTP"]);
 
 		vals.logs = dlgs;
+
+		return {...rc, ...vals};
+	}
+
+	run_query()
+	{
+		let vals = {};
+		let rc = $ERRS.ERR_SUCCESS;
+
+		if ($Config.get("env_is_production"))
+		{
+			return $ERRS.ERR_NO_PRIVILEGES;
+		}
+
+		if ($Utils.empty(this.$query))
+		{
+			return $ERRS.ERR_DB_INVALID_QUERY;
+		}
+
+		const params = [];
+
+		this.$params.forEach(param =>
+		{
+			if ($Utils.empty(param.type) || $Utils.empty(param.value))
+			{
+				return;
+			}
+
+			if (param.type == "i" || param.type == "d")
+			{
+				params.push(Number(param.value));
+			}
+			else if (param.type == "b")
+			{
+				params.push(param.value == "true");
+			}
+			else
+			{
+				params.push(param.value);
+			}
+		});
+
+		vals.result = $Db.executeQuery(this.$query, params);
+		vals.insert_id = $Db.insertId();
+		vals.last_error = $Db.lastError();
+		vals.last_error_msg = $Db.lastErrorMsg();
+		vals.affected_rows = $Db.affectedRows();
 
 		return {...rc, ...vals};
 	}
