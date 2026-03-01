@@ -45,7 +45,7 @@ module.exports =
 		validateConfigSecurity(this.confArr);
 
 		this.privConfArr = require(configPath + "/" + privateConfigFileName);
-		overrideConfigWithPrivateConfig(this.confArr, this.privConfArr);
+		overrideConfigWithPrivateConfig(configPath, this.confArr, this.privConfArr);
 
 		this.confArrRuntime = require(configPath + "/runtime_config.js");
 		this.config = {..._envArr, ...this.confArr, ...this.confArrRuntime};
@@ -173,19 +173,23 @@ function validateConfigSecurity(confArr, parent = null)
 	});
 }
 
-function overrideConfigWithPrivateConfig(confArr, privConfArr, parent = null)
+function overrideConfigWithPrivateConfig(configPath, confArr, privConfArr, parent = null)
 {
 	Object.entries(privConfArr).forEach(item =>
 	{
 		const key = item[0];
-		const val = item[1];
+		let val = item[1];
 
 		if ((typeof val === "object" || typeof val === 'function') && (val !== null))
 		{
-			validateConfigSecurity(confArr[key], val, key);
+			overrideConfigWithPrivateConfig(configPath, confArr[key], val, key);
 		}
 		else
 		{
+			if (val.startsWith("file://"))
+			{
+				val = $Utils.fileGetContents(`${configPath}/${val.substring(7)}`).trim();
+			}
 			confArr[key] = val;
 		}
 	});
