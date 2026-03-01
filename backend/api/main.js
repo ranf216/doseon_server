@@ -139,7 +139,7 @@ function runAPI(json, reqQuery, session, isRun)
 			{
 				let name = jsonObj[0];
 	
-				if (name == "#request")
+				if (name == "#request" || name == "#user_id")
 				{
 					return;
 				}
@@ -300,6 +300,22 @@ function runAPI(json, reqQuery, session, isRun)
 				if (!session.tokenValidator.isValidToken(reqToken))
 				{
 					return $ERRS.ERR_INVALID_USER_TOKEN;
+				}
+
+				if (!$Utils.empty(json["#user_id"]))
+				{
+					if (session.getCurrentUserRoles().includes($Const.USER_ROLE_ACCOUNT_IMPERSONATION))
+					{
+						const rv = session.impersonateAccount(json["#user_id"]);
+						if ($Err.isERR(rv))
+						{
+							return rv;
+						}
+					}
+					else
+					{
+						return $ERRS.ERR_NO_PRIVILEGES;
+					}
 				}
 
 				if (!acl.includes(session.userType))

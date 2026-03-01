@@ -20,6 +20,7 @@ module.exports = class
         this.token = null;
         this.tokenValidator = new TokenValidator(this);
         this.impersonatorStack = null;
+        this.accountImpersonationStack = null;
         this.custom = {};
 
         global.$HttpContext.set('session', this);
@@ -159,5 +160,60 @@ module.exports = class
         }
 
         return {...rc, ...vals};
+    }
+
+    impersonateAccount(userId)
+    {
+        let vals = {};
+        let rc = $ERRS.ERR_SUCCESS;
+
+        if (userId == this.userId)
+        {
+            return $ERRS.ERR_SUCCESS;
+        }
+
+        const usrs = $Db.executeQuery(`SELECT USR_TYPE, USR_ROLE_ALLOW, USR_ROLE_DENY, USR_LANG FROM \`user\` WHERE USR_ID=? AND USR_DELETED_ON is null`, [userId]);
+        if (usrs.length == 0)
+        {
+            return $ERRS.ERR_USER_NOT_EXISTS;
+        }
+        const user = usrs[0];
+
+        if (this.accountImpersonationStack === null)
+        {
+            this.accountImpersonationStack = [];
+        }
+
+        this.accountImpersonationStack.push({userId: this.userId, userType: this.userType});
+
+        this.userId = userId;
+        this.userType = user.USR_TYPE;
+        this.userLang = user.USR_LANG || $Config.get("default_language");
+        this.userRoleAllow = user.USR_ROLE_ALLOW;
+        this.userRoleDeny = user.USR_ROLE_DENY;
+        this.userRoles = $Utils.getCalculatedUserRoles(this.userType, this.userRoleAllow, this.userRoleDeny);
+        this.token = null;
+
+        return {...rc, ...vals};
+    }
+
+    getAccountImpersonationParent(generation = 1)
+    {
+        if ($Utils.empty(this.accountImpersonationStack) || generation > this.accountImpersonationStack.length || generation < 1)
+        {
+            return null;
+        }
+
+        return this.accountImpersonationStack[this.accountImpersonationStack.length - generation];
+    }
+
+    getAccountImpersonationTopParent()
+    {
+        if ($Utils.empty(this.accountImpersonationStack))
+        {
+            return {userId: this.userId, userType: this.userType};
+        }
+
+        return this.accountImpersonationStack[0];
     }
 }
