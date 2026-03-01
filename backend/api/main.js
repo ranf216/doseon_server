@@ -144,7 +144,7 @@ function runAPI(json, reqQuery, session, isRun)
 					return;
 				}
 				
-				if (!$Utils.isset(apiRequest[name]))
+				if (!$Utils.isset(apiRequest[name]) && !$Utils.isset(apiRequest["&" + name]))
 				{
 					unused.push(name);
 				}
