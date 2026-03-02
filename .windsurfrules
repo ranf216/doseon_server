@@ -1,0 +1,17 @@
+# AI Workflow
+- Always read the `infrastructure_brain.md` file completely before generating any code.
+- Always search infrastructure_brain.md for implementation patterns before writing any new API endpoint.
+- When requested to create API or API group, any database changes needed, always add to both db.sql and to UpgradeDB.sql and Use all the standard flows defined in infrastructure_brain.md
+- When requested to update the infrastructure_brain.md file, always update its Document Version and Last Updated fields.
+
+# Style Guide
+- Always use tab of 4 spaces for code indentation.
+- Always place curly braces on a new line (Allman style).
+
+# SQL Syntax and Style
+- Use 'JOIN' instead of 'INNER JOIN'
+- Use 'LEFT OUTER JOIN' instead of 'LEFT JOIN'
+- Indent JOINs on a new line in one tab more than the 'FROM' clause
+- Don't use table aliases if not needed
+- Don't use 'AS' keyword for table aliases
+- Don't use 'AS' keyword for column aliases
