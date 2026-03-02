@@ -1,6 +1,6 @@
 module.exports =
 {
-	"SYSTEM_NAME"														: "Infra",
+	"SYSTEM_NAME"														: "DoseOn",
 
 	"SYSTEM_ERROR_REPORT_REST_SECS"										: 300,
 	"SYSTEM_ERROR_REPORT_COUNT_BEFORE_REST"								: 5,

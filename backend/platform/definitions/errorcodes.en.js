@@ -133,6 +133,17 @@ module.exports = {
 	"ERR_CACHE_READ_FAILED"								: {"rc" : 453,	"message" : "cache get error: failed to read file"},
 	"ERR_CACHE_DELETE_FAILED"							: {"rc" : 454,	"message" : "cache delete error: failed to delete file"},
 
-	// Content
+	// Content - Medication
+	"ERR_INVALID_MEDICATION_TYPE"						: {"rc" : 500,	"message" : "invalid medication type"},
+	"ERR_INVALID_FREQUENCY_TYPE"						: {"rc" : 501,	"message" : "invalid frequency type"},
+	"ERR_INVALID_FREQUENCY_DATA"						: {"rc" : 502,	"message" : "invalid frequency data format"},
+	"ERR_INVALID_START_DATE"							: {"rc" : 503,	"message" : "invalid start date"},
+	"ERR_INVALID_MEDICATION_GROUP"						: {"rc" : 504,	"message" : "invalid medication group"},
+	"ERR_MEDICATION_NOT_FOUND"							: {"rc" : 505,	"message" : "medication not found"},
+	"ERR_MEDICATION_GROUP_NOT_FOUND"					: {"rc" : 506,	"message" : "medication group not found"},
+	"ERR_MEDICATION_GROUP_NAME_REQUIRED"				: {"rc" : 507,	"message" : "medication group name is required"},
+	"ERR_MEDICATION_GROUP_DUPLICATE_NAME"				: {"rc" : 508,	"message" : "a medication group with this name already exists"},
+	"ERR_INVALID_DOSAGE_AMOUNT"							: {"rc" : 509,	"message" : "invalid dosage amount"},
+	"ERR_INVALID_TAKEN_TIME"							: {"rc" : 510,	"message" : "invalid taken time format"},
 
 };

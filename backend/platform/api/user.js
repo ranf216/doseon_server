@@ -15,6 +15,7 @@ module.exports =
 
 			"login_with_auth_grant"				: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"@protected"					: "password",
 													"grant_id"						: "s",
 													"auth_grant"					: "s",
@@ -28,6 +29,7 @@ module.exports =
 
 			"get_login_auth_grant"				: {
 													"@acl"							: $Utils.allAuthedUserTypes(),
+													"@mode"							: "off",
 													"#token"						: "s",
 												},
 
@@ -64,18 +66,21 @@ module.exports =
 
 			"send_sms_code"						: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"phone_num"						: "s",
 													"country_code"					: "o:s:us***can be empty if phone_num has international format"
 												},
 
 			"resend_sms_code"					: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"phone_num"						: "s",
 													"country_code"					: "o:s:us***can be empty if phone_num has international format"
 												},
 
 			"verify_sms_code"					: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"phone_num"						: "s",
 													"country_code"					: "o:s:us***can be empty if phone_num has international format",
 													"verification_code"				: "s",
@@ -83,6 +88,7 @@ module.exports =
 
 			"login_with_phone"					: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"auth_key"						: "s",
 													"device_id"						: "o:s:*** the FCM device id for push notifications. You can also call update_device_info later",
 													"os_type"						: "o:i:0*** 1=Android, 2=iOS, 3=Web Browser",
@@ -94,6 +100,7 @@ module.exports =
 
 			"register_with_phone"				: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"auth_key"						: "s",
 													"first_name"					: "s",
 													"last_name"						: "s",
@@ -108,22 +115,26 @@ module.exports =
 
 			"send_email_code"					: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"email"							: "s",
 												},
 
 			"resend_email_code"					: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"email"							: "s",
 												},
 
 			"verify_email_code"					: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"email"							: "s",
 													"verification_code"				: "s",
 												},
 
 			"login_with_email"					: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"auth_key"						: "s",
 													"device_id"						: "o:s:*** the FCM device id for push notifications. You can also call update_device_info later",
 													"os_type"						: "o:i:0*** 1=Android, 2=iOS, 3=Web Browser",
@@ -135,6 +146,7 @@ module.exports =
 
 			"register_with_email"				: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"auth_key"						: "s",
 													"first_name"					: "s",
 													"last_name"						: "s",
@@ -155,6 +167,7 @@ module.exports =
 
 			"add_user"							: {
 													"@acl"							: [$ACL.USER_TYPE_ADMIN],
+													"@mode"							: "off",
 													"@protected"					: "password",
 													"#token"						: "s",
 													"first_name"					: "s",
@@ -166,6 +179,7 @@ module.exports =
 
 			"update_user"						: {
 													"@acl"							: [$ACL.USER_TYPE_ADMIN],
+													"@mode"							: "off",
 													"#token"						: "s",
 													"user_id"						: "s",
 													"first_name"					: "s",
@@ -177,12 +191,14 @@ module.exports =
 
 			"delete_user"						: {
 													"@acl"							: [$ACL.USER_TYPE_ADMIN],
+													"@mode"							: "off",
 													"#token"						: "s",
 													"user_id"						: "s"
 												},
 
 			"get_users"							: {
 													"@acl"							: [$ACL.USER_TYPE_ADMIN],
+													"@mode"							: "off",
 													"#token"						: "s"
 												},
 
@@ -216,7 +232,7 @@ module.exports =
 
 			"__create_null_user"					: {
 													"@acl"							: [$ACL.USER_TYPE_ADMIN],
-													"@mode"							: "superuser",
+													"@mode"							: "superuser,off",
 													"#token"						: "s",
 												},
 

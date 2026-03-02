@@ -529,6 +529,97 @@ END $$
 DELIMITER ;
 
 --
+-- Definition of table `medication_group`
+--
+
+DROP TABLE IF EXISTS `medication_group`;
+CREATE TABLE `medication_group` (
+  `MGR_ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `MGR_USR_ID` varchar(128) NOT NULL,
+  `MGR_NAME` varchar(250) NOT NULL,
+  `MGR_NOTE` text DEFAULT NULL,
+  `MGR_CREATED_ON` datetime NOT NULL,
+  `MGR_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`MGR_ID`),
+  KEY `FK_MGR_USR_ID` (`MGR_USR_ID`),
+  CONSTRAINT `FK_MGR_USR_ID` FOREIGN KEY (`MGR_USR_ID`) REFERENCES `user` (`USR_ID`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `medication_group`
+--
+
+/*!40000 ALTER TABLE `medication_group` DISABLE KEYS */;
+/*!40000 ALTER TABLE `medication_group` ENABLE KEYS */;
+
+
+--
+-- Definition of table `medication`
+--
+
+DROP TABLE IF EXISTS `medication`;
+CREATE TABLE `medication` (
+  `MED_ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `MED_USR_ID` varchar(128) NOT NULL,
+  `MED_NAME` varchar(250) NOT NULL,
+  `MED_TYPE` varchar(50) NOT NULL COMMENT 'pill, liquid, injection, other',
+  `MED_DOSAGE_AMOUNT` decimal(10,2) NOT NULL COMMENT 'Numeric amount per intake',
+  `MED_FREQUENCY_TYPE` varchar(50) NOT NULL COMMENT 'daily, specific_days, every_x_days, every_x_weeks, every_x_months, when_necessary',
+  `MED_FREQUENCY_DATA` text DEFAULT NULL COMMENT 'JSON with schedule details: times, days, intervals',
+  `MED_START_DATE` date NOT NULL COMMENT 'Defaults to current date',
+  `MED_DURATION` int unsigned DEFAULT NULL COMMENT 'Duration in days for calculating end date',
+  `MED_AVAILABLE_AMOUNT` decimal(10,2) DEFAULT NULL COMMENT 'Amount of medicine on hand',
+  `MED_MGR_ID` bigint(20) unsigned DEFAULT NULL COMMENT 'FK to medication_group',
+  `MED_NOTES` text DEFAULT NULL,
+  `MED_IMAGE` varchar(200) NOT NULL DEFAULT '',
+  `MED_CREATED_ON` datetime NOT NULL,
+  `MED_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`MED_ID`),
+  KEY `FK_MED_USR_ID` (`MED_USR_ID`),
+  KEY `FK_MED_MGR_ID` (`MED_MGR_ID`),
+  CONSTRAINT `FK_MED_USR_ID` FOREIGN KEY (`MED_USR_ID`) REFERENCES `user` (`USR_ID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `FK_MED_MGR_ID` FOREIGN KEY (`MED_MGR_ID`) REFERENCES `medication_group` (`MGR_ID`) ON DELETE SET NULL ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `medication`
+--
+
+/*!40000 ALTER TABLE `medication` DISABLE KEYS */;
+/*!40000 ALTER TABLE `medication` ENABLE KEYS */;
+
+
+--
+-- Definition of table `medication_taken`
+--
+
+DROP TABLE IF EXISTS `medication_taken`;
+CREATE TABLE `medication_taken` (
+  `MTK_ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `MTK_MED_ID` bigint(20) unsigned NOT NULL,
+  `MTK_USR_ID` varchar(128) NOT NULL,
+  `MTK_TAKEN_ON` datetime NOT NULL COMMENT 'When the medication was taken',
+  `MTK_SCHEDULED_TIME` datetime DEFAULT NULL COMMENT 'The scheduled time for this dose',
+  `MTK_DOSAGE_AMOUNT` decimal(10,2) NOT NULL COMMENT 'Amount taken',
+  `MTK_NOTES` text DEFAULT NULL,
+  `MTK_CREATED_ON` datetime NOT NULL,
+  PRIMARY KEY (`MTK_ID`),
+  KEY `FK_MTK_MED_ID` (`MTK_MED_ID`),
+  KEY `FK_MTK_USR_ID` (`MTK_USR_ID`),
+  KEY `IX_MTK_TAKEN_ON` (`MTK_TAKEN_ON`),
+  CONSTRAINT `FK_MTK_MED_ID` FOREIGN KEY (`MTK_MED_ID`) REFERENCES `medication` (`MED_ID`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `FK_MTK_USR_ID` FOREIGN KEY (`MTK_USR_ID`) REFERENCES `user` (`USR_ID`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `medication_taken`
+--
+
+/*!40000 ALTER TABLE `medication_taken` DISABLE KEYS */;
+/*!40000 ALTER TABLE `medication_taken` ENABLE KEYS */;
+
+
+--
 -- Definition of table `user_mem`
 --
 

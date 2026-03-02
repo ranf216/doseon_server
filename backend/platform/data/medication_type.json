@@ -1,0 +1,6 @@
+{
+    "pill":        {"name": {"en": "Pill"},        "define": "MED_TYPE_PILL" },
+    "liquid":      {"name": {"en": "Liquid"},      "define": "MED_TYPE_LIQUID" },
+    "injection":   {"name": {"en": "Injection"},   "define": "MED_TYPE_INJECTION" },
+    "other":       {"name": {"en": "Other"},       "define": "MED_TYPE_OTHER" }
+}

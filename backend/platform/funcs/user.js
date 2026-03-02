@@ -65,6 +65,8 @@ module.exports = class
 			vals.second_factor_key = secondFactorKey;
 			vals.phone_num = $Utils.getObscuredPhone(usr.USR_PHONE_NUM, usr.USR_PHONE_COUNTRY_CODE);
 			vals.email = $Utils.getObscuredEmail(usr.USR_EMAIL);
+
+			this._updateDeviceInfo(usr.USR_ID, this.$device_id, this.$os_type, this.$os_version, this.$device_model, this.$app_version);
 		}
 		else
 		{
@@ -206,7 +208,7 @@ module.exports = class
 			return $ERRS.ERR_USER_ALREADY_EXISTS;
 		}
 
-		let token = $Utils.uniqueHash();
+		let token = ($Config.get("use_2factor_auth") ? "" : $Utils.uniqueHash());
 		let userId = $Utils.uniqueHash();
 
 		$Db.beginTransaction();
@@ -230,14 +232,29 @@ module.exports = class
 			$Db.rollbackTransaction();
 			return $Err.DBError("ERR_DB_INSERT_ERROR", $Db.lastErrorMsg());
 		}
-		
+
 		this._updateDeviceInfo(userId, this.$device_id, this.$os_type, this.$os_version, this.$device_model, this.$app_version);
-		this._logLogin(userId, token);
 
 		$Db.commitTransaction();
 
-		vals['token'] = token;
-		
+
+		if ($Config.get("use_2factor_auth"))
+		{
+			const secondFactorKey = $Utils.uniqueHash();
+			const validSecs = $Config.get("otp_verification", "auth_key_valid_for_seconds");
+			const validTrhu = new $Date().addSeconds(validSecs).format();
+
+			$Db.executeQuery(`UPDATE \`user\` SET USR_2ND_FACTOR_KEY=?, USR_2ND_FACTOR_KEY_VALID_THRU=? WHERE USR_ID=?`, [secondFactorKey, validTrhu, userId]);
+
+			vals.second_factor_key = secondFactorKey;
+			vals.email = $Utils.getObscuredEmail(this.$email);
+		}
+		else
+		{
+			this._logLogin(userId, token);
+			vals.token = token;
+		}
+
 		return {...rc, ...vals};
 	}
 
