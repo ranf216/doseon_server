@@ -1,0 +1,8 @@
+{
+    "daily":            {"name": {"en": "Daily"},              "define": "FREQ_TYPE_DAILY" },
+    "specific_days":    {"name": {"en": "Specific Days"},      "define": "FREQ_TYPE_SPECIFIC_DAYS" },
+    "every_x_days":     {"name": {"en": "Every X Days"},       "define": "FREQ_TYPE_EVERY_X_DAYS" },
+    "every_x_weeks":    {"name": {"en": "Every X Weeks"},      "define": "FREQ_TYPE_EVERY_X_WEEKS" },
+    "every_x_months":   {"name": {"en": "Every X Months"},     "define": "FREQ_TYPE_EVERY_X_MONTHS" },
+    "when_necessary":   {"name": {"en": "Use When Necessary"}, "define": "FREQ_TYPE_WHEN_NECESSARY" }
+}

@@ -2,8 +2,10 @@ module.exports =
 [
 	"file",
 	// "image",
-	"social_login",
+	// "social_login",
 	"system",
 	"user",
-	"user_role",
+	// "user_role",
+	"medicine",
+	"medicine_group",
 ];
