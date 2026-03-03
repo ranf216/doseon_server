@@ -239,8 +239,8 @@ module.exports = {
 	// AWS		
 	"aws"									: {
 												"bucket_name"							: "app.doseon.staging",
-												"#access_key"							: "AKIA3F4XZBKBTROK5XAQ",
-												"#access_secret"						: "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",
+												"#access_key"							: "{AWS Access Key}",
+												"#access_secret"						: "{AWS Access Secret}",
 												"region"								: "us-west-1",
 												"version"								: "2006-03-01",
 											},
