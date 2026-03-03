@@ -2,8 +2,8 @@ module.exports = {
 	"#salt"									: "ae0d1e5984ce8c3ca967c25e17a3e7ef",
 	"#open_api_passcode"					: "{Any Passcode}",
 
-	"#db_user"								: "root",
-	"#db_pwd"								: "admin",
+	"#db_user"								: "admin",
+	"#db_pwd"								: "vcRrrGjk7SbZN9H2",
 
 	"sms"									: {
 												"#auth_id"								: "{auth_id}",

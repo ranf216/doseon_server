@@ -8,8 +8,8 @@ module.exports = {
 
 	// Environment
 	"env_is_production"						: false,
-	"env_display"							: false,
-	"env_name"								: "",
+	"env_display"							: true,
+	"env_name"								: "STAGING",
 	"env_text_color"						: "#000000",
 	"env_bkg_color"							: "#32ae48",
 
@@ -35,9 +35,9 @@ module.exports = {
 	"use_ssl"								: false,
 	"debug_email"							: true,
 	"user_cache_mode"						: 2, // 0 = none, 1 = db mem table, 2 = file system cache
-	"using_s3"								: false,
+	"using_s3"								: true,
 	"fail_deprecated_api"					: false,
-	"enable_set_file_access"				: false,
+	"enable_set_file_access"				: true,
 	"default_language"						: "en",
 
 	// Logger
@@ -62,7 +62,7 @@ module.exports = {
 	"download_url"							: `${$FILES_PUBLIC_URL}/download/`,
 
 	// System paths
-	"files_path"							: $Const.INFRA_ROOT + "/content/files",
+	"files_path"							: "files",
 	"media_path"							: $Const.INFRA_ROOT + "/content/media",
 	"log_requests_path"						: $Const.INFRA_ROOT + "/runtime/log",
 	"cache_path"							: $Const.INFRA_ROOT + "/runtime/cache",
@@ -108,12 +108,12 @@ module.exports = {
 
 	// Database
 	"#db_user"								: "{user name}",
-	"db_schema"								: "doseon",
+	"db_schema"								: "doseon_staging",
 	"#db_pwd"								: "{password}",
-	"db_instance"							: "localhost",
+	"db_instance"							: "development-db.cli8ezs4cwqd.us-west-1.rds.amazonaws.com",
 	"db_port"								: "3306",
 	"db_pool_size"							: 50,
-	"db_throw_exception_on_error"			: true,
+	"db_throw_exception_on_error"			: false,
 	"db_log_exception_on_error"				: true,
 	"db_ignore_ssl"							: false, // Turn true for production on pods
 
@@ -238,10 +238,10 @@ module.exports = {
 
 	// AWS		
 	"aws"									: {
-												"bucket_name"							: "com.starrybyte.s3bucket",
-												"#access_key"							: "{AWS Access Key}",
-												"#access_secret"						: "{AWS Access Secret}",
-												"region"								: "{AWS Region}",
+												"bucket_name"							: "app.doseon.staging",
+												"#access_key"							: "AKIA3F4XZBKBTROK5XAQ",
+												"#access_secret"						: "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",
+												"region"								: "us-west-1",
 												"version"								: "2006-03-01",
 											},
 
