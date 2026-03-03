@@ -28,8 +28,8 @@ module.exports = {
 	"#google_api_key"						: "{Google API Key}",
 
 	"aws"									: {
-												"#access_key"							: "{AWS Access Key}",
-												"#access_secret"						: "{AWS Access Secret}",
+												"#access_key"							: "AKIA3F4XZBKBTROK5XAQ",
+												"#access_secret"						: "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",
 											},
 
 	"gmail_smtp"							: {
