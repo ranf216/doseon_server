@@ -1,12 +1,12 @@
 module.exports = {
-    "SERVER_PROTOCOL"                       : "http",
-    "SERVER_PORT"                           : 8102,
-    "SERVER_PUBLIC_URL"                     : "http://doseon.local:8102",
+    "SERVER_PROTOCOL"                       : "https",
+    "SERVER_PORT"                           : 3093,
+    "SERVER_PUBLIC_URL"                     : "https://stg.api.doseon.app",
     "REQUEST_PAYLOAD_LIMIT"                 : "10mb",
 
-    "FILES_PROTOCOL"                        : "http",
-    "FILES_PORT"                            : 8102,
-    "FILES_PUBLIC_URL"                      : "http://doseon.local:8102",
+    "FILES_PROTOCOL"                        : "https",
+    "FILES_PORT"                            : 3093,
+    "FILES_PUBLIC_URL"                      : "https://stg.api.doseon.app",
 
     "SOCKET_PROTOCOL"                       : "http",
     "SOCKET_PORT"                           : 8881,
