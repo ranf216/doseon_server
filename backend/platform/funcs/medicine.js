@@ -553,7 +553,7 @@ module.exports = class
 		const rows = $Db.executeQuery(
 			`SELECT MTK_ID, MTK_MED_ID, MTK_TAKEN_ON, MTK_SCHEDULED_TIME, MTK_DOSAGE_AMOUNT, MTK_NOTES, MED_NAME, MED_TYPE
 			 FROM \`medication_taken\`
-			 	JOIN \`medication\` ON MTK_MED_ID = MED_ID
+			 	JOIN \`medication\` ON MTK_MED_ID = MED_ID AND MED_DELETED_ON IS NULL
 			 WHERE ${whereClause}
 			 ORDER BY MTK_TAKEN_ON DESC
 			 LIMIT ${pageSize} OFFSET ${offset}`,
