@@ -1,0 +1,9 @@
+1. Run npm install
+2. Connect brain.md - in admin command:
+	cd .
+	mklink brain.md C:\Development\FuzzyClick\windsurf_cascade_brain\brain.md
+3. Setup config.js and .config.js
+4. Setup server.config.js
+5. Setup runtime.config.js
+6. Setup ecosystem.config.js
+7. Add .windsurfrules file
