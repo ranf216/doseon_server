@@ -44,31 +44,6 @@ module.exports = class
 			return "active";
 		};
 
-		// Helper: compute next_taken_time from frequency_data
-		const getNextTakenTime = (med) =>
-		{
-			if (med.MED_FREQUENCY_TYPE === "when_necessary") return null;
-
-			let freqData = null;
-			if (!$Utils.empty(med.MED_FREQUENCY_DATA))
-			{
-				try { freqData = JSON.parse(med.MED_FREQUENCY_DATA); }
-				catch(e) { return null; }
-			}
-			if (!freqData || !freqData.times || freqData.times.length === 0) return null;
-
-			const nowTime = new $Date().format("H:i");
-			const sortedTimes = freqData.times.slice().sort();
-			for (let t of sortedTimes)
-			{
-				if (t > nowTime) return today + " " + t;
-			}
-			// All times passed today, return first time tomorrow
-			let tomorrow = new $Date();
-			tomorrow.addDays(1);
-			return tomorrow.format("Y-m-d") + " " + sortedTimes[0];
-		};
-
 		// Map a DB row to an API medication item
 		const mapMedication = (med) =>
 		{
@@ -78,7 +53,7 @@ module.exports = class
 				medication_type:	med.MED_TYPE,
 				dosage:				med.MED_DOSAGE_AMOUNT,
 				status:				getMedStatus(med),
-				next_taken_time:	getNextTakenTime(med),
+				next_taken_time:	$Funcs.getNextTakenTime(med, today),
 				remaining_amount:	med.MED_AVAILABLE_AMOUNT,
 			};
 			return item;
@@ -215,6 +190,7 @@ module.exports = class
 		let rc = $ERRS.ERR_SUCCESS;
 
 		const userId = this.$Session.userId;
+		const today = new $Date().format("Y-m-d");
         const filesSql = new $Files.SQL("MED_IMAGE");
 
 		const rows = $Db.executeQuery(
@@ -245,6 +221,7 @@ module.exports = class
 			group_id:			med.MED_MGR_ID || 0,
 			notes:				med.MED_NOTES || "",
 			medication_image:	$Files.getUrl(filesSql.get(med)),
+			next_taken_time:	$Funcs.getNextTakenTime(med, today),
 		};
 
 		return {...rc, ...vals};

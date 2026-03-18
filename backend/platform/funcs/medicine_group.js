@@ -10,29 +10,6 @@ function getMedStatus(med, today)
 	return "active";
 }
 
-function getNextTakenTime(med, today)
-{
-	if (med.MED_FREQUENCY_TYPE === "when_necessary") return null;
-
-	let freqData = null;
-	if (!$Utils.empty(med.MED_FREQUENCY_DATA))
-	{
-		try { freqData = JSON.parse(med.MED_FREQUENCY_DATA); }
-		catch(e) { return null; }
-	}
-	if (!freqData || !freqData.times || freqData.times.length === 0) return null;
-
-	const nowTime = new $Date().format("H:i");
-	const sortedTimes = freqData.times.slice().sort();
-	for (let t of sortedTimes)
-	{
-		if (t > nowTime) return today + " " + t;
-	}
-	let tomorrow = new $Date();
-	tomorrow.addDays(1);
-	return tomorrow.format("Y-m-d") + " " + sortedTimes[0];
-}
-
 module.exports = class
 {
     constructor(session = null)
@@ -78,7 +55,7 @@ module.exports = class
 					medication_name:	med.MED_NAME,
 					status:				getMedStatus(med, today),
 					dosage:				med.MED_DOSAGE_AMOUNT,
-					next_taken_time:	getNextTakenTime(med, today),
+					next_taken_time:	$Funcs.getNextTakenTime(med, today),
 				});
 			}
 		}
@@ -287,7 +264,7 @@ module.exports = class
 				frequency:			med.MED_FREQUENCY_TYPE,
 				dosage:				med.MED_DOSAGE_AMOUNT,
 				status:				getMedStatus(med, today),
-				next_taken_time:	getNextTakenTime(med, today),
+				next_taken_time:	$Funcs.getNextTakenTime(med, today),
 				remaining_amount:	med.MED_AVAILABLE_AMOUNT,
 			});
 		}
