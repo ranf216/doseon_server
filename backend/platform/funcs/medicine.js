@@ -14,9 +14,7 @@ module.exports = class
 		let rc = $ERRS.ERR_SUCCESS;
 
 		const userId = this.$Session.userId;
-		const now = $Utils.now();
 		const today = new $Date().format("Y-m-d");
-		const filesUrl = $Config.get("files_url");
 
 		// Fetch all groups belonging to this user
 		const groups = $Db.executeQuery(
@@ -28,7 +26,7 @@ module.exports = class
 		// Fetch all medications belonging to this user
 		const medications = $Db.executeQuery(
 			`SELECT MED_ID, MED_NAME, MED_TYPE, MED_DOSAGE_AMOUNT, MED_FREQUENCY_TYPE, MED_FREQUENCY_DATA,
-					MED_START_DATE, MED_DURATION, MED_AVAILABLE_AMOUNT, MED_MGR_ID, MED_IMAGE
+					MED_START_DATE, MED_DURATION, MED_AVAILABLE_AMOUNT, MED_MGR_ID
 			 FROM \`medication\`
 			 WHERE MED_USR_ID=? AND MED_DELETED_ON IS NULL
 			 ORDER BY MED_NAME ASC`, [userId]);
@@ -217,12 +215,13 @@ module.exports = class
 		let rc = $ERRS.ERR_SUCCESS;
 
 		const userId = this.$Session.userId;
-		const filesUrl = $Config.get("files_url");
+        const filesSql = new $Files.SQL("MED_IMAGE");
 
 		const rows = $Db.executeQuery(
 			`SELECT MED_ID, MED_NAME, MED_TYPE, MED_DOSAGE_AMOUNT, MED_FREQUENCY_TYPE, MED_FREQUENCY_DATA,
-					MED_START_DATE, MED_DURATION, MED_AVAILABLE_AMOUNT, MED_MGR_ID, MED_NOTES, MED_IMAGE
+					MED_START_DATE, MED_DURATION, MED_AVAILABLE_AMOUNT, MED_MGR_ID, MED_NOTES, ${filesSql.select()}
 			 FROM \`medication\`
+			 	${filesSql.join()}
 			 WHERE MED_ID=? AND MED_USR_ID=? AND MED_DELETED_ON IS NULL`,
 			[this.$medication_id, userId]);
 
@@ -245,7 +244,7 @@ module.exports = class
 			available_amount:	med.MED_AVAILABLE_AMOUNT || 0,
 			group_id:			med.MED_MGR_ID || 0,
 			notes:				med.MED_NOTES || "",
-			medication_image:	!$Utils.empty(med.MED_IMAGE) ? filesUrl + "/media/" + med.MED_IMAGE : "",
+			medication_image:	$Files.getUrl(filesSql.get(med)),
 		};
 
 		return {...rc, ...vals};
