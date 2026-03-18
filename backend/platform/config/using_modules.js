@@ -24,5 +24,6 @@ module.exports =
         // "user_roles",
     ],
     user: [
+        "funcs",
     ]
 };
