@@ -1,5 +1,10 @@
 # DoseOn — Development Insights
 
+**Document Version:** 1.2.0
+**Last Updated:** March 10, 2026
+
+---
+
 This document captures architectural decisions, clarifications, and insights gathered during development that are not explicitly stated in the design specification.
 
 ---
