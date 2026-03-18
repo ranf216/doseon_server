@@ -176,6 +176,21 @@ module.exports = class
         return dateStr;
     }
 
+    getDay()
+    {
+        return this._date.getDay();
+    }
+
+    getMonth()
+    {
+        return this._date.getMonth() + 1;
+    }
+
+    getFullYear()
+    {
+        return this._date.getFullYear();
+    }
+
     setTime(time)
     {
         let str = this.format('Y-m-d ' + time);
