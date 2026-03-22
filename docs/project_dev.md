@@ -1,7 +1,7 @@
 # DoseOn Server Implementation Documentation
 
-**Document Version:** 1.2  
-**Last Updated:** 2026-03-18  
+**Document Version:** 1.3  
+**Last Updated:** 2026-03-22  
 **Purpose:** Comprehensive documentation of the DoseOn server business logic implementation
 
 ---
@@ -16,12 +16,13 @@
 6. [API Modules](#6-api-modules)
     - 6.1 [Medicine Module](#61-medicine-module)
     - 6.2 [MedicineGroup Module](#62-medicinegroup-module)
-    - 6.3 [User Module](#63-user-module)
-    - 6.4 [System Module](#64-system-module)
-    - 6.5 [File Module](#65-file-module)
-    - 6.6 [SocialLogin Module](#66-sociallogin-module)
-    - 6.7 [TwoFactorAuth Module](#67-twofactorauth-module)
-    - 6.8 [UserRole Module](#68-userrole-module)
+    - 6.3 [Care Module](#63-care-module)
+    - 6.4 [User Module](#64-user-module)
+    - 6.5 [System Module](#65-system-module)
+    - 6.6 [File Module](#66-file-module)
+    - 6.7 [SocialLogin Module](#67-sociallogin-module)
+    - 6.8 [TwoFactorAuth Module](#68-twofactorauth-module)
+    - 6.9 [UserRole Module](#69-userrole-module)
 7. [Background Jobs](#7-background-jobs)
 8. [User Modules](#8-user-modules)
 
@@ -54,6 +55,7 @@ The server is built on the **InfraJS** Node.js/Express framework (infra v3.8.18)
 | `user`           | Active   |
 | `medicine`       | Active   |
 | `medicine_group` | Active   |
+| `care`           | Active   |
 | `social_login`   | Disabled |
 | `user_role`      | Disabled |
 
@@ -105,6 +107,23 @@ Stores individual medication records with scheduling information.
 | `MED_IMAGE`          | varchar(200)      | Image file reference (default '')                     |
 | `MED_CREATED_ON`     | datetime          | Creation timestamp                                    |
 | `MED_DELETED_ON`     | datetime NULL     | Soft-delete timestamp                                 |
+
+#### `care_request`
+
+Stores care relationships between care recipients and care takers.
+
+| Column                          | Type              | Description                                           |
+|---------------------------------|-------------------|-------------------------------------------------------|
+| `CRQ_ID`                        | bigint PK AI      | Care request ID                                       |
+| `CRQ_RECIPIENT_USR_ID`          | varchar(128) FK   | Care recipient user ID → `user.USR_ID`                |
+| `CRQ_TAKER_USR_ID`              | varchar(128) FK   | Care taker user ID → `user.USR_ID`                    |
+| `CRQ_STATUS`                    | smallint          | 1=Requested, 2=Accepted, 3=Declined, 4=Removed       |
+| `CRQ_FRIENDLY_NAME_BY_RECIPIENT`| varchar(250) NULL | Friendly name given by care recipient to the care taker |
+| `CRQ_FRIENDLY_NAME_BY_TAKER`    | varchar(250) NULL | Friendly name given by care taker to the care recipient |
+| `CRQ_MESSAGE`                   | text NULL         | Message sent with the request                         |
+| `CRQ_CREATED_ON`                | datetime          | Creation timestamp                                    |
+| `CRQ_LAST_UPDATE`               | datetime          | Last update timestamp                                 |
+| `CRQ_DELETED_ON`                | datetime NULL     | Soft-delete timestamp                                 |
 
 #### `medication_taken`
 
@@ -183,6 +202,15 @@ Records each dose confirmation event.
 | `every_x_months` | Every X Months     | `FREQ_TYPE_EVERY_X_MONTHS`    |
 | `when_necessary`  | Use When Necessary | `FREQ_TYPE_WHEN_NECESSARY`    |
 
+### `care_request_status`
+
+| Key | Display Name | Constant Define        |
+|-----|--------------|------------------------|
+| `1` | Requested    | `CARE_STATUS_REQUESTED`|
+| `2` | Accepted     | `CARE_STATUS_ACCEPTED` |
+| `3` | Declined     | `CARE_STATUS_DECLINED` |
+| `4` | Removed      | `CARE_STATUS_REMOVED`  |
+
 ### Frequency Data JSON Formats
 
 The `MED_FREQUENCY_DATA` field stores JSON whose structure depends on `MED_FREQUENCY_TYPE`:
@@ -213,6 +241,19 @@ The `MED_FREQUENCY_DATA` field stores JSON whose structure depends on `MED_FREQU
 | 508  | `ERR_MEDICATION_GROUP_DUPLICATE_NAME`| a medication group with this name already exists |
 | 509  | `ERR_INVALID_DOSAGE_AMOUNT`        | invalid dosage amount                              |
 | 510  | `ERR_INVALID_TAKEN_TIME`           | invalid taken time format                          |
+
+### Care-Specific Errors (520-527)
+
+| Code | Constant                            | Message                                                    |
+|------|-------------------------------------|------------------------------------------------------------|
+| 520  | `ERR_CARE_TAKER_NOT_FOUND`          | care taker user not found                                  |
+| 521  | `ERR_CARE_REQUEST_NOT_FOUND`        | care request not found                                     |
+| 522  | `ERR_CARE_CANNOT_REQUEST_SELF`      | you cannot send a care request to yourself                 |
+| 523  | `ERR_CARE_REQUEST_ALREADY_EXISTS`   | an active care request already exists for this user        |
+| 524  | `ERR_CARE_INVALID_ACTION`           | invalid action, must be 2 (accept) or 3 (decline)         |
+| 525  | `ERR_CARE_REQUEST_NOT_PENDING`      | care request is not in pending status                      |
+| 526  | `ERR_CARE_RECIPIENT_NOT_FOUND`      | care recipient not found                                   |
+| 527  | `ERR_CARE_INVALID_FRIENDLY_NAME_TYPE`| invalid friendly name type, must be 1 or 2                |
 
 For infrastructure error codes (0-454), see the `errorcodes.en.js` file.
 
@@ -346,7 +387,99 @@ For infrastructure error codes (0-454), see the `errorcodes.en.js` file.
 
 ---
 
-### 6.3 User Module
+### 6.3 Care Module
+
+**Files:** `api/care.js` (schema), `funcs/care.js` (implementation)  
+**Request prefix:** `Care/`
+
+The Care module manages the caretaker relationship between users. A care recipient invites a care taker by phone number. The care taker can accept or decline. Once accepted, the care taker has read-only access to the care recipient's medication data.
+
+**Status values:** 1=Requested, 2=Accepted, 3=Declined, 4=Removed
+
+#### `Care/send_request`
+
+- **ACL:** Regular user
+- **Parameters:** `phone_number` (s, optional), `email` (s, optional), `friendly_name` (s, optional), `message` (s, optional)
+- **Note:** At least one of `phone_number` or `email` must be provided. If both are provided, `phone_number` takes priority.
+- **Logic:**
+    1. Validates at least one of phone_number or email is provided (ERR_CARE_MISSING_PHONE_OR_EMAIL)
+    2. Looks up the care taker user by phone number or email
+    3. Validates the target is not the current user
+    4. Checks no active (Requested/Accepted) care request already exists for this pair
+    5. Inserts a new `care_request` record with status=Requested
+- **Returns:** `{request_id, request_status}`
+
+#### `Care/respond_request`
+
+- **ACL:** Regular user
+- **Parameters:** `request_id` (i), `action` (i — 2=accept, 3=decline)
+- **Logic:**
+    1. Validates action is 2 or 3
+    2. Fetches the request where current user is the care taker
+    3. Verifies request is in Requested status
+    4. Updates status to Accepted or Declined
+- **Returns:** `{request_id, request_status}`
+
+#### `Care/get_pending_requests`
+
+- **ACL:** Regular user
+- **Parameters:** None (uses session user ID)
+- **Logic:** Fetches all care requests addressed to the current user (as care taker) with status=Requested. Joins `user`/`user_details` to get care recipient info.
+- **Returns:** `{pending_requests: [{request_id, care_recipient_id, care_recipient_name, message, phone_number, created_at}]}`
+
+#### `Care/get_care_recipients`
+
+- **ACL:** Regular user
+- **Parameters:** None (uses session user ID)
+- **Logic:** Fetches all accepted care requests where current user is the care taker. Joins user data for each care recipient.
+- **Returns:** `{care_recipients: [{care_recipient_id, friendly_name, phone_number, status}]}`
+
+#### `Care/get_care_recipient_detail`
+
+- **ACL:** Regular user
+- **Parameters:** `care_recipient_id` (s)
+- **Logic:**
+    1. Verifies the current user is an accepted care taker for this recipient
+    2. Fetches care recipient user info
+    3. Fetches all medications of the care recipient with frequency/dosage/dates
+    4. Fetches recent 20 medication taken records with on_time/late status calculation (≤30 min = on_time, >30 min = late)
+    5. Calculates statistics: total_scheduled_passed, on_time_taken, lated_taken, missed_taken
+- **Returns:** `{friendly_name, phone_number, adding_date, medications: [...], recent_reminders: [...], statistic: {...}}`
+
+#### `Care/remove_care_recipient`
+
+- **ACL:** Regular user
+- **Parameters:** `care_recipient_id` (s)
+- **Logic:** Finds the accepted care request where current user is care taker, sets status=Removed
+- **Returns:** Success
+
+#### `Care/get_care_takers`
+
+- **ACL:** Regular user
+- **Parameters:** None (uses session user ID)
+- **Logic:** Fetches all non-removed care requests where current user is the care recipient. Joins user data for each care taker.
+- **Returns:** `{caretakers: [{care_taker_id, friendly_name, phone_number, request_status}]}`
+
+#### `Care/update_friendly_name`
+
+- **ACL:** Regular user
+- **Parameters:** `request_id` (i), `friendly_name` (s), `friendly_name_type` (i — 1=care taker name set by recipient, 2=care recipient name set by taker)
+- **Logic:**
+    1. Validates friendly_name_type is 1 or 2
+    2. If type=1: updates `CRQ_FRIENDLY_NAME_BY_RECIPIENT` (current user must be the care recipient)
+    3. If type=2: updates `CRQ_FRIENDLY_NAME_BY_TAKER` (current user must be the care taker)
+- **Returns:** Success
+
+#### `Care/remove_care_taker`
+
+- **ACL:** Regular user
+- **Parameters:** `care_taker_id` (s)
+- **Logic:** Finds the Requested/Accepted care request where current user is care recipient, sets status=Removed
+- **Returns:** Success
+
+---
+
+### 6.4 User Module
 
 **Files:** `api/user.js` (schema), `funcs/user.js` (implementation)  
 **Request prefix:** `User/`
