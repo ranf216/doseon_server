@@ -8,4 +8,5 @@ module.exports =
 	// "user_role",
 	"medicine",
 	"medicine_group",
+	"care",
 ];
