@@ -620,6 +620,38 @@ CREATE TABLE `medication_taken` (
 
 
 --
+-- Definition of table `care_request`
+--
+
+DROP TABLE IF EXISTS `care_request`;
+CREATE TABLE `care_request` (
+  `CRQ_ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `CRQ_RECIPIENT_USR_ID` varchar(128) NOT NULL COMMENT 'The care recipient who sends the request',
+  `CRQ_TAKER_USR_ID` varchar(128) NOT NULL COMMENT 'The care taker who receives the request',
+  `CRQ_STATUS` smallint(5) unsigned NOT NULL DEFAULT 1 COMMENT '1=Requested, 2=Accepted, 3=Declined, 4=Removed',
+  `CRQ_FRIENDLY_NAME_BY_RECIPIENT` varchar(250) DEFAULT NULL COMMENT 'Friendly name given by the care recipient to the care taker',
+  `CRQ_FRIENDLY_NAME_BY_TAKER` varchar(250) DEFAULT NULL COMMENT 'Friendly name given by the care taker to the care recipient',
+  `CRQ_MESSAGE` text DEFAULT NULL COMMENT 'Message sent with the request',
+  `CRQ_CREATED_ON` datetime NOT NULL,
+  `CRQ_LAST_UPDATE` datetime NOT NULL,
+  `CRQ_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`CRQ_ID`),
+  KEY `FK_CRQ_RECIPIENT_USR_ID` (`CRQ_RECIPIENT_USR_ID`),
+  KEY `FK_CRQ_TAKER_USR_ID` (`CRQ_TAKER_USR_ID`),
+  KEY `IX_CRQ_STATUS` (`CRQ_STATUS`),
+  CONSTRAINT `FK_CRQ_RECIPIENT_USR_ID` FOREIGN KEY (`CRQ_RECIPIENT_USR_ID`) REFERENCES `user` (`USR_ID`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `FK_CRQ_TAKER_USR_ID` FOREIGN KEY (`CRQ_TAKER_USR_ID`) REFERENCES `user` (`USR_ID`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `care_request`
+--
+
+/*!40000 ALTER TABLE `care_request` DISABLE KEYS */;
+/*!40000 ALTER TABLE `care_request` ENABLE KEYS */;
+
+
+--
 -- Definition of table `user_mem`
 --
 

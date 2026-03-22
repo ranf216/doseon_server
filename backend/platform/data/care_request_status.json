@@ -1,0 +1,6 @@
+{
+    "1":    {"name": {"en": "Requested",  "he": "ממתין"},    "define": "CARE_STATUS_REQUESTED" },
+    "2":    {"name": {"en": "Accepted",   "he": "מאושר"},    "define": "CARE_STATUS_ACCEPTED" },
+    "3":    {"name": {"en": "Declined",   "he": "נדחה"},     "define": "CARE_STATUS_DECLINED" },
+    "4":    {"name": {"en": "Removed",    "he": "הוסר"},     "define": "CARE_STATUS_REMOVED" }
+}

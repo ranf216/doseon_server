@@ -146,4 +146,15 @@ module.exports = {
 	"ERR_INVALID_DOSAGE_AMOUNT"							: {"rc" : 509,	"message" : "invalid dosage amount"},
 	"ERR_INVALID_TAKEN_TIME"							: {"rc" : 510,	"message" : "invalid taken time format"},
 
+	// Content - Care
+	"ERR_CARE_TAKER_NOT_FOUND"							: {"rc" : 520,	"message" : "care taker user not found"},
+	"ERR_CARE_REQUEST_NOT_FOUND"						: {"rc" : 521,	"message" : "care request not found"},
+	"ERR_CARE_CANNOT_REQUEST_SELF"						: {"rc" : 522,	"message" : "you cannot send a care request to yourself"},
+	"ERR_CARE_REQUEST_ALREADY_EXISTS"					: {"rc" : 523,	"message" : "an active care request already exists for this user"},
+	"ERR_CARE_INVALID_ACTION"							: {"rc" : 524,	"message" : "invalid action, must be 2 (accept) or 3 (decline)"},
+	"ERR_CARE_REQUEST_NOT_PENDING"						: {"rc" : 525,	"message" : "care request is not in pending status"},
+	"ERR_CARE_RECIPIENT_NOT_FOUND"						: {"rc" : 526,	"message" : "care recipient not found"},
+	"ERR_CARE_INVALID_FRIENDLY_NAME_TYPE"				: {"rc" : 527,	"message" : "invalid friendly name type, must be 1 (care taker) or 2 (care recipient)"},
+	"ERR_CARE_MISSING_PHONE_OR_EMAIL"					: {"rc" : 528,	"message" : "at least one of phone number or email must be provided"},
+
 };
