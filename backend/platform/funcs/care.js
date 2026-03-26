@@ -214,6 +214,69 @@ module.exports = class
         return {...rc, ...vals};
     }
 
+    get_care_recipients_overview()
+    {
+        let vals = {};
+        let rc = $ERRS.ERR_SUCCESS;
+
+        const userId = this.$Session.userId;
+        const today = new $Date().format("Y-m-d");
+
+        // Current user is care taker — get accepted care recipients
+        const recipients = $Db.executeQuery(
+            `SELECT CRQ_RECIPIENT_USR_ID, CRQ_FRIENDLY_NAME_BY_TAKER,
+                    USD_FIRST_NAME, USD_LAST_NAME
+             FROM \`care_request\`
+                JOIN \`user_details\` ON CRQ_RECIPIENT_USR_ID = USD_USR_ID
+             WHERE CRQ_TAKER_USR_ID=?
+                AND CRQ_STATUS=?
+                AND CRQ_DELETED_ON IS NULL`,
+            [userId, Number($Const.CARE_STATUS_ACCEPTED)]);
+
+        if (recipients.length === 0)
+        {
+            vals.care_recipients = [];
+            return {...rc, ...vals};
+        }
+
+        // Collect all recipient IDs and fetch all their medications in one query
+        const recipientIds = recipients.map(r => r.CRQ_RECIPIENT_USR_ID);
+        const medications = $Db.executeQuery(
+            `SELECT MED_ID, MED_USR_ID, MED_NAME, MED_TYPE, MED_DOSAGE_AMOUNT,
+                    MED_FREQUENCY_TYPE, MED_FREQUENCY_DATA, MED_START_DATE, MED_DURATION
+             FROM \`medication\`
+             WHERE MED_USR_ID IN (${recipientIds.toPlaceholders()}) AND MED_DELETED_ON IS NULL
+             ORDER BY MED_NAME ASC`,
+            recipientIds);
+
+        // Group medications by user ID
+        let medsByUser = {};
+        for (let med of medications)
+        {
+            if (!medsByUser[med.MED_USR_ID])
+            {
+                medsByUser[med.MED_USR_ID] = [];
+            }
+
+            medsByUser[med.MED_USR_ID].push({
+                medication_id:      med.MED_ID,
+                medication_name:    med.MED_NAME,
+                medication_type:    med.MED_TYPE,
+                dosage_amount:      med.MED_DOSAGE_AMOUNT,
+                frequency_type:     med.MED_FREQUENCY_TYPE,
+                next_taken_time:    $Funcs.getNextTakenTime(med, today),
+            });
+        }
+
+        vals.care_recipients = recipients.map(row => ({
+            care_recipient_id:  row.CRQ_RECIPIENT_USR_ID,
+            friendly_name:      row.CRQ_FRIENDLY_NAME_BY_TAKER || (row.USD_FIRST_NAME + " " + row.USD_LAST_NAME).trim(),
+            medications:        medsByUser[row.CRQ_RECIPIENT_USR_ID] || [],
+        }));
+
+        return {...rc, ...vals};
+    }
+
     get_care_recipient_detail()
     {
         let vals = {};
