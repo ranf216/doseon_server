@@ -54,7 +54,7 @@ module.exports =
 												"@acl"							: [$ACL.USER_TYPE_REGULAR],
 												"@doc"							: "Update the friendly name of a care taker or care recipient.",
 												"#token"						: "s",
-												"request_id"					: "i***Care request ID",
+												"user_id"						: "s***User ID of the care taker or care recipient",
 												"friendly_name"					: "s***New friendly name",
 												"friendly_name_type"			: "i***1 = friendly name of a care taker (set by the care recipient), 2 = friendly name of a care recipient (set by the care taker)",
 											},
