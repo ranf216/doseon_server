@@ -463,11 +463,11 @@ The Care module manages the caretaker relationship between users. A care recipie
 #### `Care/update_friendly_name`
 
 - **ACL:** Regular user
-- **Parameters:** `request_id` (i), `friendly_name` (s), `friendly_name_type` (i — 1=care taker name set by recipient, 2=care recipient name set by taker)
+- **Parameters:** `user_id` (s), `friendly_name` (s), `friendly_name_type` (i — 1=care taker name set by recipient, 2=care recipient name set by taker)
 - **Logic:**
     1. Validates friendly_name_type is 1 or 2
-    2. If type=1: updates `CRQ_FRIENDLY_NAME_BY_RECIPIENT` (current user must be the care recipient)
-    3. If type=2: updates `CRQ_FRIENDLY_NAME_BY_TAKER` (current user must be the care taker)
+    2. If type=1: `user_id` is the care taker; finds the care request where current user is recipient and `user_id` is taker; updates `CRQ_FRIENDLY_NAME_BY_RECIPIENT`
+    3. If type=2: `user_id` is the care recipient; finds the care request where current user is taker and `user_id` is recipient; updates `CRQ_FRIENDLY_NAME_BY_TAKER`
 - **Returns:** Success
 
 #### `Care/remove_care_taker`

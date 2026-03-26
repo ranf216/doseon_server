@@ -437,14 +437,14 @@ module.exports = class
 
         if (friendlyNameType === 1)
         {
-            // Current user is the care recipient, updating the friendly name for a care taker
+            // Current user is the care recipient, user_id is the care taker
             const rows = $Db.executeQuery(
                 `SELECT CRQ_ID
                  FROM \`care_request\`
-                 WHERE CRQ_ID=? AND CRQ_RECIPIENT_USR_ID=?
+                 WHERE CRQ_RECIPIENT_USR_ID=? AND CRQ_TAKER_USR_ID=?
                     AND CRQ_STATUS IN (?, ?)
                     AND CRQ_DELETED_ON IS NULL`,
-                [this.$request_id, userId, Number($Const.CARE_STATUS_REQUESTED), Number($Const.CARE_STATUS_ACCEPTED)]);
+                [userId, this.$user_id, Number($Const.CARE_STATUS_REQUESTED), Number($Const.CARE_STATUS_ACCEPTED)]);
 
             if (rows.length === 0)
             {
@@ -453,18 +453,18 @@ module.exports = class
 
             $Db.executeQuery(
                 `UPDATE \`care_request\` SET CRQ_FRIENDLY_NAME_BY_RECIPIENT=?, CRQ_LAST_UPDATE=? WHERE CRQ_ID=?`,
-                [this.$friendly_name, now, this.$request_id]);
+                [this.$friendly_name, now, rows[0].CRQ_ID]);
         }
         else
         {
-            // Current user is the care taker, updating the friendly name for a care recipient
+            // Current user is the care taker, user_id is the care recipient
             const rows = $Db.executeQuery(
                 `SELECT CRQ_ID
                  FROM \`care_request\`
-                 WHERE CRQ_ID=? AND CRQ_TAKER_USR_ID=?
+                 WHERE CRQ_TAKER_USR_ID=? AND CRQ_RECIPIENT_USR_ID=?
                     AND CRQ_STATUS=?
                     AND CRQ_DELETED_ON IS NULL`,
-                [this.$request_id, userId, Number($Const.CARE_STATUS_ACCEPTED)]);
+                [userId, this.$user_id, Number($Const.CARE_STATUS_ACCEPTED)]);
 
             if (rows.length === 0)
             {
@@ -473,7 +473,7 @@ module.exports = class
 
             $Db.executeQuery(
                 `UPDATE \`care_request\` SET CRQ_FRIENDLY_NAME_BY_TAKER=?, CRQ_LAST_UPDATE=? WHERE CRQ_ID=?`,
-                [this.$friendly_name, now, this.$request_id]);
+                [this.$friendly_name, now, rows[0].CRQ_ID]);
         }
 
         if ($Db.isError())
