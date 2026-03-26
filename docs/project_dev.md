@@ -434,6 +434,13 @@ The Care module manages the caretaker relationship between users. A care recipie
 - **Logic:** Fetches all accepted care requests where current user is the care taker. Joins user data for each care recipient.
 - **Returns:** `{care_recipients: [{care_recipient_id, friendly_name, phone_number, status}]}`
 
+#### `Care/get_care_recipients_overview`
+
+- **ACL:** Regular user
+- **Parameters:** None (uses session user ID)
+- **Logic:** Fetches all accepted care recipients for the current care taker. Then fetches all medications for those recipients in a single query (no DB queries inside loops) and groups them by user ID. Each medication includes `next_taken_time` via `$Funcs.getNextTakenTime`.
+- **Returns:** `{care_recipients: [{care_recipient_id, friendly_name, medications: [{medication_id, medication_name, medication_type, dosage_amount, frequency_type, next_taken_time}]}]}`
+
 #### `Care/get_care_recipient_detail`
 
 - **ACL:** Regular user
