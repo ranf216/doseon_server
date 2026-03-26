@@ -30,6 +30,12 @@ module.exports =
 												"#token"						: "s",
 											},
 
+			"get_care_recipients_overview"	: {
+												"@acl"							: [$ACL.USER_TYPE_REGULAR],
+												"@doc"							: "Get the list of care recipients with their medications and next take time. The current user is the care taker.",
+												"#token"						: "s",
+											},
+
 			"get_care_recipient_detail"		: {
 												"@acl"							: [$ACL.USER_TYPE_REGULAR],
 												"@doc"							: "Get detailed information about a care recipient including medications, recent reminders and statistics.",
