@@ -87,6 +87,7 @@ module.exports = class
 			let medItem = {
 				medication_id:			med.MED_ID,
 				medication_name:		med.MED_NAME,
+				medication_type:		med.MED_TYPE,
 				medication_image:		$Files.getUrl(filesSql.get(med)),
 				medication_group_name:	med.MGR_NAME || "",
 				dosage:					med.MED_DOSAGE_AMOUNT,
