@@ -1,7 +1,7 @@
 # DoseOn Server Implementation Documentation
 
-**Document Version:** 1.4  
-**Last Updated:** 2026-03-26  
+**Document Version:** 1.4.1  
+**Last Updated:** 2026-03-29  
 **Purpose:** Comprehensive documentation of the DoseOn server business logic implementation
 
 ---
@@ -278,7 +278,7 @@ For infrastructure error codes (0-454), see the `errorcodes.en.js` file.
     5. Compares scheduled times against taken records (matched by scheduled_time)
     6. Classifies each untaken schedule as **missed** (time has passed) or **upcoming** (time hasn't passed)
     7. Calculates `missed_minutes` for missed medications
-- **Returns:** `{missed_medications: [{medication_id, medication_name, medication_image, medication_group_name, schedule_time, dosage, missed_minutes}], upcoming_medications: [{medication_id, medication_name, medication_image, medication_group_name, schedule_time, dosage}]}`
+- **Returns:** `{missed_medications: [{medication_id, medication_name, medication_type, medication_image, medication_group_name, schedule_time, dosage, missed_minutes}], upcoming_medications: [{medication_id, medication_name, medication_type, medication_image, medication_group_name, schedule_time, dosage}]}`
 
 #### `Medicine/get_medication_list`
 
@@ -365,8 +365,8 @@ For infrastructure error codes (0-454), see the `errorcodes.en.js` file.
 - **Parameters:** None
 - **Logic:**
     1. Fetches all groups for the user (not deleted)
-    2. Fetches all medications for the user (not deleted) with image URLs
-    3. For each group, summarizes its medications: count, status breakdown, next taken time
+    2. Fetches all medications for the user (not deleted) with type and image URLs
+    3. For each group, summarizes its medications: count, type, status breakdown, next taken time
 - **Returns:** `{groups: [...]}`
 
 #### `MedicineGroup/add_group`
