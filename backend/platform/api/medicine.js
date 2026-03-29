@@ -1,5 +1,11 @@
 module.exports =
 {
+			"get_home_overview"				: {
+												"@acl"							: [$ACL.USER_TYPE_REGULAR],
+												"@doc"							: "Get upcoming and missed medication intakes for the Home screen.",
+												"#token"						: "s",
+											},
+
 			"get_medication_list"			: {
 												"@acl"							: [$ACL.USER_TYPE_REGULAR],
 												"@doc"							: "Get the list of user medications grouped by medication groups.",
