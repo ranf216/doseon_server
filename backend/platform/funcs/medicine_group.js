@@ -37,7 +37,7 @@ module.exports = class
 
 		// Fetch all medications belonging to this user (for summary info)
 		const medications = $Db.executeQuery(
-			`SELECT MED_ID, MED_NAME, MED_DOSAGE_AMOUNT, MED_FREQUENCY_TYPE, MED_FREQUENCY_DATA,
+			`SELECT MED_ID, MED_NAME, MED_TYPE, MED_DOSAGE_AMOUNT, MED_FREQUENCY_TYPE, MED_FREQUENCY_DATA,
 					MED_START_DATE, MED_DURATION, MED_MGR_ID
 			 FROM \`medication\`
 			 WHERE MED_USR_ID=? AND MED_DELETED_ON IS NULL
@@ -53,6 +53,7 @@ module.exports = class
 				medsByGroup[med.MED_MGR_ID].push({
 					medication_id:		med.MED_ID,
 					medication_name:	med.MED_NAME,
+					medication_type:	med.MED_TYPE,
 					status:				getMedStatus(med, today),
 					dosage:				med.MED_DOSAGE_AMOUNT,
 					next_taken_time:	$Funcs.getNextTakenTime(med, today),
