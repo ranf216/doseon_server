@@ -1,5 +1,76 @@
 module.exports = class
 {
+	static getScheduledTimesForDate(med, dateStr)
+	{
+		if (med.MED_FREQUENCY_TYPE === "when_necessary") return [];
+
+		let freqData = null;
+		if (!$Utils.empty(med.MED_FREQUENCY_DATA))
+		{
+			try { freqData = JSON.parse(med.MED_FREQUENCY_DATA); }
+			catch(e) { return []; }
+		}
+		if (!freqData || !freqData.times || freqData.times.length === 0) return [];
+
+		const sortedTimes = freqData.times.slice().sort();
+		const checkDate = new $Date(dateStr);
+		const startDate = new $Date(med.MED_START_DATE);
+
+		// If the date is before the medication start date, no scheduled times
+		if (dateStr < startDate.format("Y-m-d")) return [];
+
+		if (med.MED_FREQUENCY_TYPE === "daily")
+		{
+			return sortedTimes;
+		}
+
+		if (med.MED_FREQUENCY_TYPE === "specific_days")
+		{
+			if (!freqData.days || freqData.days.length === 0) return [];
+			const dayOfWeek = checkDate.getDay();
+			if (freqData.days.includes(dayOfWeek)) return sortedTimes;
+			return [];
+		}
+
+		if (med.MED_FREQUENCY_TYPE === "every_x_days")
+		{
+			if (!freqData.interval || freqData.interval <= 0) return [];
+			const daysSinceStart = Math.floor((checkDate.getTimestamp() - startDate.getTimestamp()) / (60 * 60 * 24));
+			if (daysSinceStart % freqData.interval === 0) return sortedTimes;
+			return [];
+		}
+
+		if (med.MED_FREQUENCY_TYPE === "every_x_weeks")
+		{
+			if (!freqData.interval || freqData.interval <= 0) return [];
+			const daysSinceStart = Math.floor((checkDate.getTimestamp() - startDate.getTimestamp()) / (60 * 60 * 24));
+			const weeksSinceStart = Math.floor(daysSinceStart / 7);
+			if (daysSinceStart >= 0 && daysSinceStart % 7 === 0 && weeksSinceStart % freqData.interval === 0) return sortedTimes;
+
+			// Also check if the day falls within a valid interval week and matches days array
+			if (freqData.days && freqData.days.length > 0)
+			{
+				if (weeksSinceStart % freqData.interval === 0 && freqData.days.includes(checkDate.getDay())) return sortedTimes;
+			}
+			return [];
+		}
+
+		if (med.MED_FREQUENCY_TYPE === "every_x_months")
+		{
+			if (!freqData.interval || freqData.interval <= 0) return [];
+			const monthsSinceStart = (checkDate.getFullYear() - startDate.getFullYear()) * 12 + (checkDate.getMonth() - startDate.getMonth());
+			if (monthsSinceStart >= 0 && monthsSinceStart % freqData.interval === 0)
+			{
+				// Check day_of_month if specified, otherwise use start date's day
+				const targetDay = freqData.day_of_month || startDate.getDate();
+				if (checkDate.getDate() === targetDay) return sortedTimes;
+			}
+			return [];
+		}
+
+		return [];
+	}
+
 	static getNextTakenTime(med, today)
 	{
 		if (med.MED_FREQUENCY_TYPE === "when_necessary") return null;
