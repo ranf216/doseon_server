@@ -8,6 +8,132 @@ module.exports = class
         }
     }
 
+	get_home_overview()
+	{
+		let vals = {};
+		let rc = $ERRS.ERR_SUCCESS;
+
+		const userId = this.$Session.userId;
+		const now = new $Date();
+		const today = now.format("Y-m-d");
+		const nowDateTime = now.format("Y-m-d H:i");
+		const filesSql = new $Files.SQL("MED_IMAGE");
+
+		// Fetch all active medications for this user with group name and image
+		const medications = $Db.executeQuery(
+			`SELECT MED_ID, MED_NAME, MED_TYPE, MED_DOSAGE_AMOUNT, MED_FREQUENCY_TYPE, MED_FREQUENCY_DATA,
+					MED_START_DATE, MED_DURATION, MED_MGR_ID, MGR_NAME, ${filesSql.select()}
+			 FROM \`medication\`
+				LEFT OUTER JOIN \`medication_group\` ON MED_MGR_ID = MGR_ID AND MGR_DELETED_ON IS NULL
+				${filesSql.join()}
+			 WHERE MED_USR_ID=? AND MED_DELETED_ON IS NULL
+			 ORDER BY MED_NAME ASC`, [userId]);
+
+		// Filter out completed medications and "when_necessary" (no schedule)
+		let activeMeds = [];
+		for (let med of medications)
+		{
+			if (med.MED_FREQUENCY_TYPE === "when_necessary") continue;
+
+			if (!$Utils.empty(med.MED_DURATION) && med.MED_DURATION > 0)
+			{
+				let endDate = new $Date(med.MED_START_DATE);
+				endDate.addDays(med.MED_DURATION);
+				if (endDate.format("Y-m-d") < today) continue;
+			}
+
+			activeMeds.push(med);
+		}
+
+		// Collect all medication IDs to fetch today's taken records in a single query
+		let medIds = activeMeds.map(m => m.MED_ID);
+		let takenMap = {}; // MED_ID -> set of scheduled_time strings
+
+		if (medIds.length > 0)
+		{
+			const takenRows = $Db.executeQuery(
+				`SELECT MTK_MED_ID, MTK_SCHEDULED_TIME
+				 FROM \`medication_taken\`
+				 WHERE MTK_USR_ID=? AND MTK_MED_ID IN (${medIds.toPlaceholders()})
+					AND MTK_TAKEN_ON >= ? AND MTK_TAKEN_ON < ?`,
+				[userId, ...medIds, today + " 00:00:00", today + " 23:59:59"]);
+
+			for (let row of takenRows)
+			{
+				if (!takenMap[row.MTK_MED_ID]) takenMap[row.MTK_MED_ID] = [];
+				if (row.MTK_SCHEDULED_TIME)
+				{
+					takenMap[row.MTK_MED_ID].push(new $Date(row.MTK_SCHEDULED_TIME).format("Y-m-d H:i"));
+				}
+				else
+				{
+					// Taken without scheduled_time — count as a generic taken for this med today
+					takenMap[row.MTK_MED_ID].push("__no_schedule__");
+				}
+			}
+		}
+
+		let missedMedications = [];
+		let upcomingMedications = [];
+
+		for (let med of activeMeds)
+		{
+			// Get today's scheduled times for this medication
+			let scheduledTimes = $Funcs.getScheduledTimesForDate(med, today);
+			if (!scheduledTimes || scheduledTimes.length === 0) continue;
+
+			let takenTimes = takenMap[med.MED_ID] || [];
+
+			let medItem = {
+				medication_id:			med.MED_ID,
+				medication_name:		med.MED_NAME,
+				medication_image:		$Files.getUrl(filesSql.get(med)),
+				medication_group_name:	med.MGR_NAME || "",
+				dosage:					med.MED_DOSAGE_AMOUNT,
+			};
+
+			for (let schedTime of scheduledTimes)
+			{
+				let fullDateTime = today + " " + schedTime;
+				let isTaken = takenTimes.includes(fullDateTime);
+
+				if (isTaken) continue;
+
+				if (fullDateTime < nowDateTime)
+				{
+					// Missed: scheduled time has passed without a taken record
+					let scheduledDate = new $Date(fullDateTime);
+					let missedMinutes = Math.floor(now.diff(scheduledDate) / 60);
+
+					missedMedications.push({
+						...medItem,
+						schedule_time:	fullDateTime,
+						missed_minutes:	missedMinutes,
+					});
+				}
+				else
+				{
+					// Upcoming: scheduled time hasn't passed yet
+					upcomingMedications.push({
+						...medItem,
+						schedule_time: fullDateTime,
+					});
+				}
+			}
+		}
+
+		// Sort missed by schedule_time ascending (earliest missed first)
+		missedMedications.sort((a, b) => a.schedule_time.localeCompare(b.schedule_time));
+
+		// Sort upcoming by schedule_time ascending (next one first)
+		upcomingMedications.sort((a, b) => a.schedule_time.localeCompare(b.schedule_time));
+
+		vals.missed_medications = missedMedications;
+		vals.upcoming_medications = upcomingMedications;
+
+		return {...rc, ...vals};
+	}
+
 	get_medication_list()
 	{
 		let vals = {};
