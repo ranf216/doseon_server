@@ -1,7 +1,7 @@
 # DoseOn Server Implementation Documentation
 
-**Document Version:** 1.3  
-**Last Updated:** 2026-03-22  
+**Document Version:** 1.4  
+**Last Updated:** 2026-03-26  
 **Purpose:** Comprehensive documentation of the DoseOn server business logic implementation
 
 ---
@@ -265,6 +265,20 @@ For infrastructure error codes (0-454), see the `errorcodes.en.js` file.
 
 **Files:** `api/medicine.js` (schema), `funcs/medicine.js` (implementation)  
 **Request prefix:** `Medicine/`
+
+#### `Medicine/get_home_overview`
+
+- **ACL:** Regular user
+- **Parameters:** None (uses session user ID)
+- **Logic:**
+    1. Fetches all medications for the user (not deleted) with group name and image via `$Files.SQL`
+    2. Filters out completed medications (past end date) and "when_necessary" frequency type
+    3. Fetches today's `medication_taken` records for all active medication IDs in a single query
+    4. For each active medication, calls `$Funcs.getScheduledTimesForDate()` to get today's scheduled times
+    5. Compares scheduled times against taken records (matched by scheduled_time)
+    6. Classifies each untaken schedule as **missed** (time has passed) or **upcoming** (time hasn't passed)
+    7. Calculates `missed_minutes` for missed medications
+- **Returns:** `{missed_medications: [{medication_id, medication_name, medication_image, medication_group_name, schedule_time, dosage, missed_minutes}], upcoming_medications: [{medication_id, medication_name, medication_image, medication_group_name, schedule_time, dosage}]}`
 
 #### `Medicine/get_medication_list`
 
@@ -736,6 +750,23 @@ This folder contains project-specific reusable modules. User modules are automat
 **File:** `user_modules/funcs.js`  
 **Global Access:** `$Funcs`  
 **Purpose:** Common utility functions shared across multiple API modules
+
+#### `$Funcs.getScheduledTimesForDate(med, dateStr)`
+
+Returns an array of scheduled time strings ("HH:MM" format) for a medication on a given date.
+
+- **Parameters:**
+    - `med` (object) — Medication record with `MED_FREQUENCY_TYPE`, `MED_FREQUENCY_DATA`, and `MED_START_DATE` fields
+    - `dateStr` (string) — Date to check in "Y-m-d" format
+- **Returns:** (array) — Array of time strings (e.g. ["08:00", "14:00", "20:00"]), or empty array if not scheduled
+- **Logic:**
+    1. Returns empty array for "when_necessary" frequency type or if date is before start date
+    2. For "daily" — returns all times
+    3. For "specific_days" — returns times only if the date's day-of-week is in the `days` array
+    4. For "every_x_days" — returns times if `daysSinceStart % interval === 0`
+    5. For "every_x_weeks" — returns times if the date falls on a valid interval week (and matches `days` array if specified)
+    6. For "every_x_months" — returns times if the date falls on a valid interval month and matches `day_of_month`
+- **Used By:** `Medicine/get_home_overview`
 
 #### `$Funcs.getNextTakenTime(med, today)`
 
