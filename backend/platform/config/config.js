@@ -7,6 +7,7 @@ module.exports = {
 	"api_server_active"						: true,
 
 	// Environment
+	"env_uid"								: "5352c3a8b16c67598968de9a1e36f5f401bed3b07a95b8f66d2d38d2e127e01b",
 	"env_is_production"						: false,
 	"env_display"							: false,
 	"env_name"								: "",
@@ -231,7 +232,7 @@ module.exports = {
 	"apple_api_url"							: "ssl://gateway.push.apple.com:2195",
 
 	// FCM / Google API		
-	"#google_fb_key"          				: "{Path to firebase.json}",
+	"#google_fb_key"          				: "{firebase.json in config folder}",
 	"#google_api_key"						: "{Google API Key}",
 	"google_api_protocol"					: "https",
 	"google_api_lang"						: "en",
