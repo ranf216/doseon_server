@@ -24,7 +24,7 @@ module.exports = {
 
 	"#facebook_app_secret"          		: "{facebook app secret}",
 	"#apple_api_passphrase"					: "{API passphrase}",
-	"#google_fb_key"          				: "{Path to firebase.json}", // $Const.CONFIG_PATH + "/firebase.json"
+	"#google_fb_key"          				: "{firebase.json in config folder}", // "firebase.json"
 	"#google_api_key"						: "{Google API Key}",
 
 	"aws"									: {
