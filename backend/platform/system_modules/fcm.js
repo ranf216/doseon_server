@@ -7,7 +7,7 @@ module.exports =
     {
         if (!adminisInit)
         {
-            Admin.initializeApp({credential: Admin.credential.cert($Config.get("google_fb_key"))});
+            Admin.initializeApp({credential: Admin.credential.cert($Const.CONFIG_PATH + "/" + $Config.get("google_fb_key"))});
             adminisInit = true;
         }
     },
