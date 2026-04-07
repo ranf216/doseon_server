@@ -157,4 +157,10 @@ module.exports = {
 	"ERR_CARE_INVALID_FRIENDLY_NAME_TYPE"				: {"rc" : 527,	"message" : "invalid friendly name type, must be 1 (care taker) or 2 (care recipient)"},
 	"ERR_CARE_MISSING_PHONE_OR_EMAIL"					: {"rc" : 528,	"message" : "at least one of phone number or email must be provided"},
 
+	// Content - Settings
+	"ERR_INVALID_NOTIFICATION_SOUND"					: {"rc" : 530,	"message" : "invalid notification sound"},
+	"ERR_INVALID_SOUND_VOLUME"							: {"rc" : 531,	"message" : "invalid sound volume, must be between 0 and 100"},
+	"ERR_INVALID_REPEAT_TIME"							: {"rc" : 532,	"message" : "invalid repeat time, must be a positive number"},
+	"ERR_INVALID_LANGUAGE"								: {"rc" : 533,	"message" : "invalid language"},
+
 };

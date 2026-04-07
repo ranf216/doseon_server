@@ -9,4 +9,5 @@ module.exports =
 	"medicine",
 	"medicine_group",
 	"care",
+	"settings",
 ];
