@@ -1,0 +1,8 @@
+{
+    "default":      {"name": {"en": "Default",       "he": "ברירת מחדל"},  "define": "NOTIF_SOUND_DEFAULT" },
+    "chime":        {"name": {"en": "Chime",          "he": "צלצול"},       "define": "NOTIF_SOUND_CHIME" },
+    "bell":         {"name": {"en": "Bell",            "he": "פעמון"},       "define": "NOTIF_SOUND_BELL" },
+    "gentle":       {"name": {"en": "Gentle",          "he": "עדין"},        "define": "NOTIF_SOUND_GENTLE" },
+    "alert":        {"name": {"en": "Alert",           "he": "התראה"},       "define": "NOTIF_SOUND_ALERT" },
+    "melody":       {"name": {"en": "Melody",          "he": "מנגינה"},      "define": "NOTIF_SOUND_MELODY" }
+}

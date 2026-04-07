@@ -1,7 +1,7 @@
 # DoseOn Server Implementation Documentation
 
-**Document Version:** 1.4.1  
-**Last Updated:** 2026-03-29  
+**Document Version:** 1.5.0  
+**Last Updated:** 2026-04-07  
 **Purpose:** Comprehensive documentation of the DoseOn server business logic implementation
 
 ---
@@ -17,12 +17,13 @@
     - 6.1 [Medicine Module](#61-medicine-module)
     - 6.2 [MedicineGroup Module](#62-medicinegroup-module)
     - 6.3 [Care Module](#63-care-module)
-    - 6.4 [User Module](#64-user-module)
-    - 6.5 [System Module](#65-system-module)
-    - 6.6 [File Module](#66-file-module)
-    - 6.7 [SocialLogin Module](#67-sociallogin-module)
-    - 6.8 [TwoFactorAuth Module](#68-twofactorauth-module)
-    - 6.9 [UserRole Module](#69-userrole-module)
+    - 6.4 [Settings Module](#64-settings-module)
+    - 6.5 [User Module](#65-user-module)
+    - 6.6 [System Module](#66-system-module)
+    - 6.7 [File Module](#67-file-module)
+    - 6.8 [SocialLogin Module](#68-sociallogin-module)
+    - 6.9 [TwoFactorAuth Module](#69-twofactorauth-module)
+    - 6.10 [UserRole Module](#610-userrole-module)
 7. [Background Jobs](#7-background-jobs)
 8. [User Modules](#8-user-modules)
 
@@ -56,6 +57,7 @@ The server is built on the **InfraJS** Node.js/Express framework (infra v3.8.18)
 | `medicine`       | Active   |
 | `medicine_group` | Active   |
 | `care`           | Active   |
+| `settings`       | Active   |
 | `social_login`   | Disabled |
 | `user_role`      | Disabled |
 
@@ -140,6 +142,20 @@ Records each dose confirmation event.
 | `MTK_NOTES`         | text NULL         | Optional notes                                 |
 | `MTK_CREATED_ON`    | datetime          | Record creation timestamp                      |
 
+#### `user_settings`
+
+Stores per-user application settings.
+
+| Column                          | Type              | Description                                           |
+|---------------------------------|-------------------|-------------------------------------------------------|
+| `UST_USR_ID`                    | varchar(128) PK FK| User ID → `user.USR_ID`                               |
+| `UST_NOTIFICATION_SOUND_ID`     | varchar(50)       | Notification sound identifier (default: "default")     |
+| `UST_NOTIFICATION_SOUND_VOLUME` | int unsigned      | Sound volume 0-100 (default: 80)                      |
+| `UST_NOTIFICATION_SOUND_REPEAT_TIME` | int unsigned | Repeat alert interval in minutes (default: 5)         |
+| `UST_LANGUAGE`                  | varchar(16)       | User preferred language (default: "en")                |
+| `UST_CREATED_ON`                | datetime          | Creation timestamp                                    |
+| `UST_LAST_UPDATE`               | datetime          | Last update timestamp                                 |
+
 ### 3.2 Infrastructure Tables
 
 | Table                | Purpose                                                  |
@@ -211,6 +227,17 @@ Records each dose confirmation event.
 | `3` | Declined     | `CARE_STATUS_DECLINED` |
 | `4` | Removed      | `CARE_STATUS_REMOVED`  |
 
+### `notification_sound`
+
+| Key          | Display Name | Constant Define          |
+|--------------|--------------|--------------------------|
+| `default`    | Default      | `NOTIF_SOUND_DEFAULT`    |
+| `chime`      | Chime        | `NOTIF_SOUND_CHIME`      |
+| `bell`       | Bell         | `NOTIF_SOUND_BELL`       |
+| `gentle`     | Gentle       | `NOTIF_SOUND_GENTLE`     |
+| `alert`      | Alert        | `NOTIF_SOUND_ALERT`      |
+| `melody`     | Melody       | `NOTIF_SOUND_MELODY`     |
+
 ### Frequency Data JSON Formats
 
 The `MED_FREQUENCY_DATA` field stores JSON whose structure depends on `MED_FREQUENCY_TYPE`:
@@ -254,6 +281,15 @@ The `MED_FREQUENCY_DATA` field stores JSON whose structure depends on `MED_FREQU
 | 525  | `ERR_CARE_REQUEST_NOT_PENDING`      | care request is not in pending status                      |
 | 526  | `ERR_CARE_RECIPIENT_NOT_FOUND`      | care recipient not found                                   |
 | 527  | `ERR_CARE_INVALID_FRIENDLY_NAME_TYPE`| invalid friendly name type, must be 1 or 2                |
+
+### Settings-Specific Errors (530-533)
+
+| Code | Constant                           | Message                                           |
+|------|------------------------------------|----------------------------------------------------||
+| 530  | `ERR_INVALID_NOTIFICATION_SOUND`   | invalid notification sound                         |
+| 531  | `ERR_INVALID_SOUND_VOLUME`         | invalid sound volume, must be between 0 and 100    |
+| 532  | `ERR_INVALID_REPEAT_TIME`          | invalid repeat time, must be a positive number     |
+| 533  | `ERR_INVALID_LANGUAGE`             | invalid language                                   |
 
 For infrastructure error codes (0-454), see the `errorcodes.en.js` file.
 
@@ -500,7 +536,43 @@ The Care module manages the caretaker relationship between users. A care recipie
 
 ---
 
-### 6.4 User Module
+### 6.4 Settings Module
+
+**Files:** `api/settings.js` (schema), `funcs/settings.js` (implementation)  
+**Request prefix:** `Settings/`
+
+The Settings module manages per-user application settings including notification sound preferences, sound volume, alert repeat time, and language.
+
+**Database table:** `user_settings` (prefix `UST_`)
+
+#### `Settings/get_settings`
+
+- **ACL:** Regular user
+- **Parameters:** None (uses session user ID)
+- **Logic:**
+    1. Fetches user settings from `user_settings` table
+    2. If no settings row exists, auto-creates one with default values (sound: "default", volume: 80, repeat: 5 min, language: "en")
+    3. Resolves notification sound name from `notification_sound` data item
+- **Returns:** `{notification_sound_id, notification_sound_name, notification_sound_volume, notification_sound_repeat_time, language}`
+
+#### `Settings/update_settings`
+
+- **ACL:** Regular user
+- **Parameters:** `notification_sound_id` (s, optional), `notification_sound_volume` (i, optional), `notification_sound_repeat_time` (i, optional), `language` (s, optional)
+- **Logic:**
+    1. Ensures settings row exists (auto-creates if missing)
+    2. Validates each provided field:
+        - `notification_sound_id`: must be valid in `notification_sound` data item
+        - `notification_sound_volume`: must be 0-100
+        - `notification_sound_repeat_time`: must be >= 1
+        - `language`: must be "en" or "he"
+    3. Builds dynamic SET clause for only provided fields
+    4. Updates `user_settings` and returns the full updated settings
+- **Returns:** `{notification_sound_id, notification_sound_name, notification_sound_volume, notification_sound_repeat_time, language}`
+
+---
+
+### 6.5 User Module
 
 **Files:** `api/user.js` (schema), `funcs/user.js` (implementation)  
 **Request prefix:** `User/`
