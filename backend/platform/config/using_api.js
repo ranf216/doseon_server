@@ -10,4 +10,5 @@ module.exports =
 	"medicine_group",
 	"care",
 	"settings",
+	"statistic",
 ];

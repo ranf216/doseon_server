@@ -1,7 +1,7 @@
 # DoseOn Server Implementation Documentation
 
-**Document Version:** 1.5.0  
-**Last Updated:** 2026-04-07  
+**Document Version:** 1.6.0  
+**Last Updated:** 2026-04-08  
 **Purpose:** Comprehensive documentation of the DoseOn server business logic implementation
 
 ---
@@ -18,12 +18,13 @@
     - 6.2 [MedicineGroup Module](#62-medicinegroup-module)
     - 6.3 [Care Module](#63-care-module)
     - 6.4 [Settings Module](#64-settings-module)
-    - 6.5 [User Module](#65-user-module)
-    - 6.6 [System Module](#66-system-module)
-    - 6.7 [File Module](#67-file-module)
-    - 6.8 [SocialLogin Module](#68-sociallogin-module)
-    - 6.9 [TwoFactorAuth Module](#69-twofactorauth-module)
-    - 6.10 [UserRole Module](#610-userrole-module)
+    - 6.5 [Statistic Module](#65-statistic-module)
+    - 6.6 [User Module](#66-user-module)
+    - 6.7 [System Module](#67-system-module)
+    - 6.8 [File Module](#68-file-module)
+    - 6.9 [SocialLogin Module](#69-sociallogin-module)
+    - 6.10 [TwoFactorAuth Module](#610-twofactorauth-module)
+    - 6.11 [UserRole Module](#611-userrole-module)
 7. [Background Jobs](#7-background-jobs)
 8. [User Modules](#8-user-modules)
 
@@ -58,6 +59,7 @@ The server is built on the **InfraJS** Node.js/Express framework (infra v3.8.18)
 | `medicine_group` | Active   |
 | `care`           | Active   |
 | `settings`       | Active   |
+| `statistic`      | Active   |
 | `social_login`   | Disabled |
 | `user_role`      | Disabled |
 
@@ -290,6 +292,14 @@ The `MED_FREQUENCY_DATA` field stores JSON whose structure depends on `MED_FREQU
 | 531  | `ERR_INVALID_SOUND_VOLUME`         | invalid sound volume, must be between 0 and 100    |
 | 532  | `ERR_INVALID_REPEAT_TIME`          | invalid repeat time, must be a positive number     |
 | 533  | `ERR_INVALID_LANGUAGE`             | invalid language                                   |
+
+### Statistic-Specific Errors (540-542)
+
+| Code | Constant                           | Message                                           |
+|------|------------------------------------|----------------------------------------------------||
+| 540  | `ERR_STAT_INVALID_DATE_RANGE`      | invalid date range, from_date must be before or equal to to_date |
+| 541  | `ERR_STAT_INVALID_DATE_FORMAT`     | invalid date format, expected YYYY-MM-DD           |
+| 542  | `ERR_STAT_RECIPIENT_NOT_FOUND`     | care recipient not found or not accessible         |
 
 For infrastructure error codes (0-454), see the `errorcodes.en.js` file.
 
@@ -572,7 +582,44 @@ The Settings module manages per-user application settings including notification
 
 ---
 
-### 6.5 User Module
+### 6.5 Statistic Module
+
+**Files:** `api/statistic.js` (schema), `funcs/statistic.js` (implementation)  
+**Request prefix:** `Statistic/`
+
+The Statistic module provides medication intake statistics for the current user or for a care recipient. Statistics are computed by iterating over scheduled medication times (using `$Funcs.getScheduledTimesForDate`) and comparing against actual `medication_taken` records.
+
+**Classification logic (per scheduled dose):**
+- **On time:** taken within 30 minutes of scheduled time
+- **Late:** taken more than 30 minutes after scheduled time
+- **Missed:** no taken record exists for the scheduled time
+
+#### `Statistic/get_user_statistics`
+
+- **ACL:** Regular user
+- **Parameters:** `from_date` (s, optional, YYYY-MM-DD), `to_date` (s, optional, YYYY-MM-DD)
+- **Logic:**
+    1. Validates date parameters (format and range)
+    2. Fetches all active medications for the user (excluding "when_necessary" frequency)
+    3. Fetches all taken records for the user, optionally filtered by date range
+    4. For each medication, iterates day-by-day over the effective date range (medication start to today, clamped by from_date/to_date and medication duration)
+    5. For each day, calls `$Funcs.getScheduledTimesForDate()` to get scheduled times
+    6. For each past scheduled time, checks if a matching taken record exists and classifies it
+- **Returns:** `{total_scheduled_passed, on_time_taken, lated_taken, missed_taken}`
+
+#### `Statistic/get_care_recipient_statistics`
+
+- **ACL:** Regular user
+- **Parameters:** `recipient_id` (s), `from_date` (s, optional, YYYY-MM-DD), `to_date` (s, optional, YYYY-MM-DD)
+- **Logic:**
+    1. Verifies the current user is an accepted care taker for the given recipient
+    2. Validates date parameters
+    3. Calculates statistics for the recipient using the same logic as `get_user_statistics`
+- **Returns:** `{total_scheduled_passed, on_time_taken, lated_taken, missed_taken}`
+
+---
+
+### 6.6 User Module
 
 **Files:** `api/user.js` (schema), `funcs/user.js` (implementation)  
 **Request prefix:** `User/`
@@ -653,7 +700,7 @@ The Settings module manages per-user application settings including notification
 
 ---
 
-### 6.4 System Module
+### 6.7 System Module
 
 **Files:** `api/system.js` (schema), `funcs/system.js` (implementation)  
 **Request prefix:** `System/`
@@ -683,7 +730,7 @@ The Settings module manages per-user application settings including notification
 
 ---
 
-### 6.5 File Module
+### 6.8 File Module
 
 **Files:** `api/file.js` (schema), `funcs/file.js` (implementation)  
 **Request prefix:** `File/`
@@ -705,7 +752,7 @@ The Settings module manages per-user application settings including notification
 
 ---
 
-### 6.6 SocialLogin Module
+### 6.9 SocialLogin Module
 
 **Files:** `api/social_login.js` (schema), `funcs/social_login.js` (implementation)  
 **Request prefix:** `SocialLogin/`  
@@ -734,7 +781,7 @@ The Settings module manages per-user application settings including notification
 
 ---
 
-### 6.7 TwoFactorAuth Module
+### 6.10 TwoFactorAuth Module
 
 **Files:** `api/two_factor_auth.js` (schema), `funcs/two_factor_auth.js` (implementation)  
 **Request prefix:** `TwoFactorAuth/`
@@ -766,7 +813,7 @@ Serializes/deserializes `{field1, field2, authKey}` JSON stored in `USR_2ND_FACT
 
 ---
 
-### 6.8 UserRole Module
+### 6.11 UserRole Module
 
 **Files:** `api/user_role.js` (schema), `funcs/user_role.js` (implementation)  
 **Request prefix:** `UserRole/`  
