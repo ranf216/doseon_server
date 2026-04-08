@@ -163,4 +163,9 @@ module.exports = {
 	"ERR_INVALID_REPEAT_TIME"							: {"rc" : 532,	"message" : "invalid repeat time, must be a positive number"},
 	"ERR_INVALID_LANGUAGE"								: {"rc" : 533,	"message" : "invalid language"},
 
+	// Content - Statistic
+	"ERR_STAT_INVALID_DATE_RANGE"						: {"rc" : 540,	"message" : "invalid date range, from_date must be before or equal to to_date"},
+	"ERR_STAT_INVALID_DATE_FORMAT"						: {"rc" : 541,	"message" : "invalid date format, expected YYYY-MM-DD"},
+	"ERR_STAT_RECIPIENT_NOT_FOUND"						: {"rc" : 542,	"message" : "care recipient not found or not accessible"},
+
 };
