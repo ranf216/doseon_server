@@ -1070,6 +1070,75 @@ module.exports = class
 		return {...rc, ...vals};
 	}
 
+	get_my_profile()
+	{
+		let vals = {};
+		let rc = $ERRS.ERR_SUCCESS;
+
+		let usrs = $Db.executeQuery(`SELECT USD_USERNAME, USD_YEAR_OF_BIRTH, USD_REASON_OF_USING,
+												USD_PHONE_NUM, USD_EMAIL, USR_CREATED_ON
+										FROM \`user\`
+											JOIN \`user_details\` ON USR_ID = USD_USR_ID
+										WHERE USR_ID = ?`, [this.$Session.userId]);
+		if (usrs.length == 0)
+		{
+			return $ERRS.ERR_USER_NOT_EXISTS;
+		}
+
+		let usr = usrs[0];
+
+		vals.username = usr.USD_USERNAME || "";
+		vals.year_of_birth = usr.USD_YEAR_OF_BIRTH || 0;
+		vals.reason_of_using = usr.USD_REASON_OF_USING || "";
+		vals.phone_num = usr.USD_PHONE_NUM || "";
+		vals.email = usr.USD_EMAIL || "";
+		vals.registered_on = usr.USR_CREATED_ON || "";
+
+		return {...rc, ...vals};
+	}
+
+	update_my_profile()
+	{
+		let vals = {};
+		let rc = $ERRS.ERR_SUCCESS;
+
+		let sets = [];
+		let params = [];
+
+		if (!$Utils.empty(this.$username))
+		{
+			sets.push("USD_USERNAME = ?");
+			params.push(this.$username);
+		}
+
+		if (this.$year_of_birth > 0)
+		{
+			sets.push("USD_YEAR_OF_BIRTH = ?");
+			params.push(this.$year_of_birth);
+		}
+
+		if (!$Utils.empty(this.$reason_of_using))
+		{
+			sets.push("USD_REASON_OF_USING = ?");
+			params.push(this.$reason_of_using);
+		}
+
+		if (sets.length == 0)
+		{
+			return {...rc, ...vals};
+		}
+
+		params.push(this.$Session.userId);
+
+		$Db.executeQuery(`UPDATE \`user_details\` SET ${sets.join(", ")} WHERE USD_USR_ID = ?`, params);
+		if ($Db.isError())
+		{
+			return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());
+		}
+
+		return {...rc, ...vals};
+	}
+
 	delete_profile()
 	{
 		let vals = {};
