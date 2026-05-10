@@ -217,6 +217,19 @@ module.exports =
 													"language"						: "s***the user's app selected language in two characters code",
 												},
 
+			"get_my_profile"					: {
+													"@acl"							: [$ACL.USER_TYPE_REGULAR],
+													"#token"						: "s",
+												},
+
+			"update_my_profile"					: {
+													"@acl"							: [$ACL.USER_TYPE_REGULAR],
+													"#token"						: "s",
+													"username"						: "o:s:***display name",
+													"year_of_birth"					: "o:i:0***year of birth (e.g. 1990)",
+													"reason_of_using"				: "o:s:***reason for using the app",
+												},
+
 			"delete_profile"					: {
 													"@acl"							: [$ACL.USER_TYPE_REGULAR],
 													"#token"						: "s",

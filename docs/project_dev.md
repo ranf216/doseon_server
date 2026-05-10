@@ -1,7 +1,7 @@
 # DoseOn Server Implementation Documentation
 
-**Document Version:** 1.6.0  
-**Last Updated:** 2026-04-08  
+**Document Version:** 1.7.0  
+**Last Updated:** 2026-05-10  
 **Purpose:** Comprehensive documentation of the DoseOn server business logic implementation
 
 ---
@@ -163,7 +163,7 @@ Stores per-user application settings.
 | Table                | Purpose                                                  |
 |----------------------|----------------------------------------------------------|
 | `user`               | Core user authentication (ID, email, password, token, device info, 2FA fields) |
-| `user_details`       | Extended user profile (first/last name, image). Updates trigger sync to `user` table |
+| `user_details`       | Extended user profile (first/last name, image, username, year_of_birth, reason_of_using). Updates trigger sync to `user` table |
 | `user_mem`           | MEMORY engine table for fast user token validation cache  |
 | `file`               | Uploaded file metadata                                   |
 | `file_multipart`     | Multipart upload tracking                                |
@@ -671,6 +671,8 @@ The Statistic module provides medication intake statistics for the current user 
 
 #### Profile Management
 
+- `User/get_my_profile` — returns the current user's profile: username, year_of_birth, reason_of_using, phone_num, email, registered_on
+- `User/update_my_profile` — updates profile fields (all optional): username, year_of_birth, reason_of_using. Only provided (non-empty) fields are updated.
 - `User/delete_profile` — self-delete: clears token/device, marks `user_details` as deleted, appends "/DELETED" to phone/email
 
 #### Admin Operations
